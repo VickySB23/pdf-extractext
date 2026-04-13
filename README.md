@@ -1,4 +1,4 @@
-# PDF Extractext - API de Grado de Producción
+# PDF Extractext
 
 Una aplicación FastAPI orientada a producción para la extracción de texto de archivos PDF y su posterior sumarización mediante Inteligencia Artificial. 
 
