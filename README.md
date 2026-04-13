@@ -98,3 +98,7 @@ uv run pytest
 
 # Ejecutar con detalles
 uv run pytest -v
+
+
+#Encender el server (no esta probado)
+uv run uvicorn app.main:app --reload
