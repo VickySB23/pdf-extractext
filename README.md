@@ -49,3 +49,52 @@ uv sync
 .venv\Scripts\activate
 # En macOS/Linux:
 source .venv/bin/activate
+
+2. Variables de Entorno
+Crear el archivo .env en la raíz del proyecto para cumplir con el principio de configuración estricta de entornos:
+
+Bash
+cp .env.example .env
+(Asegúrate de configurar NVIDIA_API_KEY en tu archivo local).
+
+3. Ejecutar la Aplicación
+Bash
+# Iniciar el servidor de desarrollo usando uv
+uv run uvicorn app.main:app --reload
+Documentación Interactiva (Swagger): http://localhost:8000/docs
+
+Verificación de Estado: http://localhost:8000/api/health
+
+Estructura del Proyecto
+Plaintext
+pdf-extractext/
+├── app/                           # Módulo principal
+│   ├── presentation/              # Capa 1: Transporte y API
+│   │   ├── routers/               # Endpoints HTTP
+│   │   ├── schemas/               # Modelos Pydantic
+│   │   └── templates/             # Interfaz web básica
+│   ├── application/               # Capa 2: Lógica de Negocio
+│   │   ├── services/              # Casos de uso (PDF y Sumarización)
+│   │   └── interfaces/            # Contratos de abstracción
+│   ├── infrastructure/            # Capa 3: Implementaciones
+│   │   ├── external/              # Cliente HTTP para IA (NVIDIA)
+│   │   ├── repositories/          # Persistencia de datos
+│   │   └── file_storage/          # Lectura en memoria (Stateless)
+│   ├── core/                      # Configuración de la App
+│   │   └── __init__.py            # Settings de Pydantic
+│   └── main.py                    # Punto de entrada de FastAPI
+├── tests/                         # Suite de Pruebas (TDD)
+├── pyproject.toml                 # Dependencias modernas gestionadas por uv
+├── uv.lock                        # Bloqueo de versiones para reproducibilidad
+├── .gitignore                     # Archivos ignorados
+└── README.md                      # Documentación principal
+Metodología de Desarrollo: TDD
+Este proyecto se construye obligatoriamente bajo el enfoque TDD (Test-Driven Development): Red -> Green -> Refactor.
+
+Ejecutar Pruebas
+Bash
+# Ejecutar todas las pruebas unitarias
+uv run pytest
+
+# Ejecutar con detalles
+uv run pytest -v
