@@ -1,7 +1,22 @@
 [project]
 name = "pdf-extractext"
 version = "0.1.0"
-description = "Add your description here"
+description = "API para extraer y resumir texto de PDFs"
 readme = "README.md"
 requires-python = ">=3.11"
-dependencies = []
+dependencies = [
+    "fastapi>=0.100.0",
+    "uvicorn[standard]>=0.23.0",
+    "pydantic>=2.0.0",
+    "pydantic-settings>=2.0.0",
+    "python-multipart>=0.0.6",
+    "python-dotenv>=1.0.0",
+    "pypdf>=3.0.0",
+    "httpx>=0.25.0"
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0"
+]
