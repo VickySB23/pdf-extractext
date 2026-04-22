@@ -30,7 +30,7 @@ class SummaryService:
             original_filename=filename,
             summary_text=ai_response.content,
             full_text=extracted.text,
-            cheksum=extracted.checksum,
+            checksum=extracted.checksum,
             created_at=None,
         )
         return await self._repository.save(summary)

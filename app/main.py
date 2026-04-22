@@ -9,9 +9,8 @@ from app.core import get_settings
 from app.application.services.pdf_service import PDFService
 from app.application.services.summary_service import SummaryService
 from app.infrastructure.external.nvidia_client import NvidiaAIProvider
-from app.infrastructure.repositories.in_memory_repository import (
-    InMemorySummaryRepository,
-)
+from tinydb import TinyDB
+from app.infrastructure.repositories.nosql_repository import TinyDBSummaryRepository
 from app.presentation.routers.pdf_summary import router as pdf_router
 
 
@@ -26,10 +25,11 @@ def get_summary_service() -> SummaryService:
 
 def create_summary_service() -> SummaryService:
     global _summary_service
+    db = TinyDB('summaries_db.json')
     _summary_service = SummaryService(
         pdf_service=PDFService(),
         ai_provider=NvidiaAIProvider(),
-        repository=InMemorySummaryRepository(),
+        repository=TinyDBSummaryRepository(db),
     )
     return _summary_service
 

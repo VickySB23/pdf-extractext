@@ -34,7 +34,7 @@ class NvidiaAIProvider(AIProvider):
                     "max_tokens": 1024,
                     "temperature": 0.3,
                 },
-                timeout=60.0,
+                timeout=120.0,
             )
             response.raise_for_status()
             data = response.json()
