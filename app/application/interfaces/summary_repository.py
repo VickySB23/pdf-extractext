@@ -8,11 +8,12 @@ from uuid import UUID
 
 @dataclass
 class Summary:
-    id: UUID
+    id: UUID | None
     original_filename: str
     summary_text: str
-    extracted_text: str
-    created_at: datetime
+    full_text: str
+    checksum: str
+    created_at: datetime | None
 
 
 class SummaryRepository(ABC):
@@ -26,4 +27,14 @@ class SummaryRepository(ABC):
 
     @abstractmethod
     async def get_all(self, limit: int = 100) -> list[Summary]:
+        pass
+    
+    @abstractmethod
+    async def exists_by_checksum(self, checksum: str) -> bool:
+        """Verifica si el ADN del archivo ya existe."""
+        pass
+
+    @abstractmethod
+    async def delete(self, summary_id: UUID) -> bool:
+        """Borra un resumen por ID (Parte del CRUD)."""
         pass
