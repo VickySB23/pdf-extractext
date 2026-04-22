@@ -3,6 +3,8 @@
 import io
 from dataclasses import dataclass
 from pypdf import PdfReader
+import hashlib
+from io import BytesIO
 
 
 @dataclass
@@ -11,10 +13,13 @@ class ExtractedPDF:
     text: str
     page_count: int
     character_count: int
+    checksum: str
 
 
 class PDFService:
     def extract_text(self, file_content: bytes, filename: str) -> ExtractedPDF:
+        file_hash = hashlib.sha256(file_content).hexdigest()
+        
         reader = PdfReader(io.BytesIO(file_content))
         text_parts = []
 
@@ -30,4 +35,5 @@ class PDFService:
             text=full_text,
             page_count=len(reader.pages),
             character_count=len(full_text),
+            checksum=file_hash,
         )
