@@ -18,7 +18,6 @@ class SummaryService:
 
     async def create_summary(self, file_content: bytes, filename: str) -> Summary:
         extracted = self._pdf_service.extract_text(file_content, filename)
-        ai_response = await self._ai_provider.generate_summary(extracted.text)
         
         if await self._repository.exists_by_checksum(extracted.checksum):
             raise ValueError("Un resumen para este archivo ya existe wn la base de datos.")

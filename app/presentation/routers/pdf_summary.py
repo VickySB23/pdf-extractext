@@ -83,9 +83,6 @@ async def health_check(service: SummaryService = Depends(get_summary_service)):
         ai_provider_available=ai_available,
     )
 
-from uuid import UUID
-from fastapi import HTTPException, Depends
-
 @router.delete("/api/summaries/{summary_id}")
 async def delete_summary(
     summary_id: UUID,
