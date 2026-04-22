@@ -1,6 +1,8 @@
+"""
+Pruebas de integración para el repositorio NoSQL (TinyDB).
+Verifica que la capa de persistencia se comunique correctamente con la base de datos física.
+"""
 import pytest
-import uuid
-from datetime import datetime, timezone
 from tinydb import TinyDB
 from tinydb.storages import MemoryStorage
 from app.infrastructure.repositories.nosql_repository import TinyDBSummaryRepository
@@ -8,17 +10,22 @@ from app.application.interfaces.summary_repository import Summary
 
 @pytest.fixture
 def memory_db():
-    # Usamos MemoryStorage para que la base de datos se borre al terminar el test
-    db = TinyDB(storage=MemoryStorage)
+    """
+    Configura una base de datos temporal en RAM.
+    Garantiza que las pruebas sean aisladas y no ensucien la base de datos real del usuario.
+    """
+    # type: ignore se añade para calmar al linter sobre el tipado interno de TinyDB
+    db = TinyDB(storage=MemoryStorage)  # type: ignore
     yield db
     db.close()
 
 @pytest.mark.asyncio
 async def test_save_and_check_duplicate(memory_db):
-    # 1. Preparamos el repositorio
+    """Verifica el flujo completo de guardado y la regla de negocio anti-duplicados."""
+    
+    # 1. ARRANGE (Preparar: Configurar el entorno y los datos de prueba)
     repo = TinyDBSummaryRepository(memory_db)
     
-    # 2. Creamos un documento de prueba (con ID y fecha en None para que el repo los genere)
     fake_summary = Summary(
         id=None, 
         original_filename="test.pdf",
@@ -28,14 +35,14 @@ async def test_save_and_check_duplicate(memory_db):
         created_at=None
     )
     
-    # 3. Probamos guardar usando await
+    # 2. ACT (Ejecutar: Llamar a los métodos del sistema que queremos probar)
     await repo.save(fake_summary)
-    
-    # 4. Verificamos que se haya guardado y tenga la huella digital correcta
     results = await repo.get_all()
+    
+    # 3. ASSERT (Comprobar: Validar que los resultados sean exactamente los esperados)
     assert len(results) == 1
     assert results[0].checksum == "abcd1234huelladigital"
     
-    # 5. Probamos la regla anti-duplicados del profe
-    assert await repo.exists_by_checksum("abcd1234huelladigital") == True
-    assert await repo.exists_by_checksum("otrahuella") == False
+    # Regla PEP8: Las comparaciones con booleanos usan 'is' en lugar de '=='
+    assert await repo.exists_by_checksum("abcd1234huelladigital") is True
+    assert await repo.exists_by_checksum("otrahuella") is False

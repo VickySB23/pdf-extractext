@@ -68,26 +68,57 @@ Verificación de Estado: http://localhost:8000/api/health
 Estructura del Proyecto
 Plaintext
 pdf-extractext/
-├── app/                           # Módulo principal
-│   ├── presentation/              # Capa 1: Transporte y API
-│   │   ├── routers/               # Endpoints HTTP
-│   │   ├── schemas/               # Modelos Pydantic
-│   │   └── templates/             # Interfaz web básica
-│   ├── application/               # Capa 2: Lógica de Negocio
-│   │   ├── services/              # Casos de uso (PDF y Sumarización)
-│   │   └── interfaces/            # Contratos de abstracción
-│   ├── infrastructure/            # Capa 3: Implementaciones
-│   │   ├── external/              # Cliente HTTP para IA (NVIDIA)
-│   │   ├── repositories/          # Persistencia de datos
-│   │   └── file_storage/          # Lectura en memoria (Stateless)
-│   ├── core/                      # Configuración de la App
-│   │   └── __init__.py            # Settings de Pydantic
-│   └── main.py                    # Punto de entrada de FastAPI
-├── tests/                         # Suite de Pruebas (TDD)
-├── pyproject.toml                 # Dependencias modernas gestionadas por uv
-├── uv.lock                        # Bloqueo de versiones para reproducibilidad
-├── .gitignore                     # Archivos ignorados
-└── README.md                      # Documentación principal
+│
+├── app/                                 # 📦 Código principal de la aplicación
+│   ├── application/                     # ⚙️ Lógica de negocio (Casos de uso y Contratos)
+│   │   ├── interfaces/
+│   │   │   ├── ai_provider.py           # Contrato para la IA
+│   │   │   └── summary_repository.py    # Contrato para la base de datos
+│   │   ├── services/
+│   │   │   ├── __init__.py
+│   │   │   ├── pdf_service.py           # Lógica de extracción de PDFs
+│   │   │   └── summary_service.py       # Orquestador del flujo
+│   │   └── __init__.py
+│   │
+│   ├── core/                            # 🔧 Configuraciones globales (Settings)
+│   │   └── __init__.py
+│   │
+│   ├── infrastructure/                  # 🔌 Conexiones al mundo exterior (BD y APIs)
+│   │   ├── external/
+│   │   │   └── nvidia_client.py         # Implementación de Nvidia NIM
+│   │   ├── repositories/
+│   │   │   ├── in_memory_repository.py  # (Opcional) Persistencia en RAM
+│   │   │   └── nosql_repository.py      # Persistencia con TinyDB
+│   │   └── __init__.py
+│   │
+│   ├── presentation/                    # 🌐 Interfaz hacia el usuario (API y Frontend)
+│   │   ├── routers/
+│   │   │   └── pdf_summary.py           # Endpoints REST (POST, GET, DELETE)
+│   │   ├── schemas/
+│   │   │   └── pdf_summary.py           # DTOs y validación con Pydantic
+│   │   ├── templates/
+│   │   │   └── index.html               # Frontend visual
+│   │   └── __init__.py
+│   │
+│   └── main.py                          # Punto de entrada de FastAPI y ensamblaje
+│
+├── docs/                                # 📚 Documentación del proyecto
+│   ├── estructura.md
+│   └── image.png
+│
+├── tests/                               # 🧪 Pruebas unitarias y de integración (TDD)
+│   ├── test_api.py
+│   ├── test_nosql_repository.py
+│   ├── test_pdf_service.py
+│   └── test_summary_service.py
+│
+├── .gitignore                           # Exclusiones de Git (ej. .venv, pycache)
+├── LICENSE                              # Licencia del proyecto
+├── README.md                            # Presentación y manual del proyecto
+├── main.py                              # (Parece un entrypoint raíz adicional o antiguo)
+├── pyproject.toml                       # Gestión de dependencias (uv/pip)
+├── summaries_db.json                    # 💾 Tu base de datos NoSQL física (TinyDB)
+└── uv.lock                              # Bloqueo de versiones de dependencias
 Metodología de Desarrollo: TDD
 Este proyecto se construye obligatoriamente bajo el enfoque TDD (Test-Driven Development): Red -> Green -> Refactor.
 

@@ -1,4 +1,7 @@
-"""Nvidia NIM API client - OpenAI-compatible API implementation."""
+"""
+Cliente para la API de Nvidia NIM.
+Implementa el patrón Adaptador para comunicarse con servicios de IA externos.
+"""
 
 import httpx
 from app.application.interfaces.ai_provider import AIProvider, AIResponse
@@ -13,6 +16,9 @@ class NvidiaAIProvider(AIProvider):
         self._model = settings.ai_model
 
     async def generate_summary(self, text: str, max_length: int = 500) -> AIResponse:
+        """
+        Envía el texto extraído al modelo de IA y retorna el resumen generado.
+        """
         prompt = self._build_summary_prompt(text, max_length)
 
         async with httpx.AsyncClient() as client:
@@ -34,6 +40,7 @@ class NvidiaAIProvider(AIProvider):
                     "max_tokens": 1024,
                     "temperature": 0.3,
                 },
+                # !!!! Aca puse un timeout alto (2 mins)porque a veces tarda mucho en responder, pero esto se puede ajustar.
                 timeout=120.0,
             )
             response.raise_for_status()
