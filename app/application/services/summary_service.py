@@ -40,3 +40,6 @@ class SummaryService:
 
     async def list_summaries(self, limit: int = 100) -> list[Summary]:
         return await self._repository.get_all(limit)
+    
+    async def delete_summary(self, summary_id) -> bool:
+        return await self._repository.delete(summary_id)

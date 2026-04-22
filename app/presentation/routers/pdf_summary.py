@@ -82,3 +82,21 @@ async def health_check(service: SummaryService = Depends(get_summary_service)):
         status="healthy" if ai_available else "degraded",
         ai_provider_available=ai_available,
     )
+
+from uuid import UUID
+from fastapi import HTTPException, Depends
+
+@router.delete("/api/summaries/{summary_id}")
+async def delete_summary(
+    summary_id: UUID,
+    service: SummaryService = Depends(get_summary_service)
+):
+    # Intentamos borrarlo
+    fue_borrado = await service.delete_summary(summary_id)
+    
+    # Si la base de datos dice que no lo encontró, lanzamos un error 404
+    if not fue_borrado:
+        raise HTTPException(status_code=404, detail="Resumen no encontrado en la base de datos")
+    
+    # Si todo salió bien, devolvemos un mensaje de éxito
+    return {"message": "¡Resumen eliminado exitosamente!"}
