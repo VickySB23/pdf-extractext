@@ -1,74 +1,73 @@
 """
-Implementación del repositorio utilizando TinyDB.
-Aísla la lógica de base de datos del resto de la aplicación (Clean Architecture).
+Módulo de infraestructura para la persistencia de datos.
+Implementa el patrón Repository utilizando TinyDB como motor NoSQL para cumplir
+con el requerimiento de almacenamiento no relacional del proyecto.
 """
-
 import uuid
 from datetime import datetime, timezone
 from tinydb import TinyDB, Query
-from app.application.interfaces.summary_repository import SummaryRepository, Summary
+from app.application.interfaces.document_repository import DocumentRepository, DocumentRecord
 
-class TinyDBSummaryRepository(SummaryRepository):
-    """Maneja la persistencia de los resúmenes en formato JSON NoSQL."""
-    
+class TinyDBDocumentRepository(DocumentRepository):
+    """
+    Adaptador de base de datos que traduce las entidades de dominio (DocumentRecord)
+    al formato JSON requerido por TinyDB.
+    """
     def __init__(self, db: TinyDB):
         self.db = db
-        # Creamos o usamos una "tabla" (colección NoSQL) llamada 'summaries'
-        self.table = db.table('summaries')
+        self.table = db.table('documents')
 
-    async def save(self, summary: Summary) -> Summary:
-        """Guarda un nuevo resumen generando identificadores automáticos si no existen."""
-        if not summary.id:
-            summary.id = uuid.uuid4()
-        if not summary.created_at:
-            summary.created_at = datetime.now(timezone.utc)
+    async def save(self, document: DocumentRecord) -> DocumentRecord:
+        """Persiste un nuevo registro, autogenerando el ID y la fecha de creación si faltan."""
+        if not document.id:
+            document.id = uuid.uuid4()
+        if not document.created_at:
+            document.created_at = datetime.now(timezone.utc)
 
-        # Mapeo de la entidad de dominio (Summary) a formato de diccionario para TinyDB
-        doc = {
-            "id": str(summary.id),
-            "original_filename": summary.original_filename,
-            "summary_text": summary.summary_text,
-            "full_text": summary.full_text,
-            "checksum": summary.checksum,
-            "created_at": summary.created_at.isoformat() # Convertimos fecha a texto
+        doc_dict = {
+            "id": str(document.id),
+            "original_filename": document.original_filename,
+            "full_text": document.full_text,
+            "checksum": document.checksum,
+            "created_at": document.created_at.isoformat()
         }
-        
-        # Se inserta
-        self.table.insert(doc)
-        return summary
+        self.table.insert(doc_dict)
+        return document
 
-    async def get_by_id(self, summary_id: uuid.UUID) -> Summary | None:
-        """Busca un resumen por ID. Devuelve None si no lo encuentra."""
+    async def get_by_id(self, doc_id: uuid.UUID) -> DocumentRecord | None:
+        """Busca un documento por ID. Retorna None para facilitar el manejo de errores HTTP 404."""
         Doc = Query()
-        result = self.table.search(Doc.id == str(summary_id))
-        return self._map_to_summary(result[0]) if result else None
+        result = self.table.search(Doc.id == str(doc_id))
+        return self._map_to_document(result[0]) if result else None
 
-    async def get_all(self, limit: int = 100) -> list[Summary]:
-        """Obtiene todos los resúmenes ordenados del más reciente al más antiguo."""
+    async def get_all(self, limit: int = 100) -> list[DocumentRecord]:
+        """Obtiene la colección de documentos ordenados desde el más reciente al más antiguo."""
         results = self.table.all()
-        # Del más nuevo al más viejo
         results.sort(key=lambda x: x["created_at"], reverse=True)
-        return [self._map_to_summary(doc) for doc in results[:limit]]
+        return [self._map_to_document(doc) for doc in results[:limit]]
+
+    async def update(self, doc_id: uuid.UUID, new_text: str) -> DocumentRecord | None:
+        """Actualiza un registro y devuelve el documento resultante para validar el cambio."""
+        Doc = Query()
+        updated = self.table.update({"full_text": new_text}, Doc.id == str(doc_id))
+        return await self.get_by_id(doc_id) if updated else None
+
+    async def delete(self, doc_id: uuid.UUID) -> bool:
+        """Elimina físicamente el documento. Devuelve True si se borró al menos un registro."""
+        Doc = Query()
+        deleted = self.table.remove(Doc.id == str(doc_id))
+        return len(deleted) > 0
 
     async def exists_by_checksum(self, checksum: str) -> bool:
-        """
-        Verifica la existencia del archivo mediante su huella digital (SHA-256).
-        """
+        """Verifica si la huella digital del archivo ya está registrada para evitar duplicados."""
         Doc = Query()
         return self.table.contains(Doc.checksum == checksum)
 
-    async def delete(self, summary_id: uuid.UUID) -> bool:
-        Doc = Query()
-        """Borra un documento físico de la base de datos."""
-        deleted = self.table.remove(Doc.id == str(summary_id))
-        return len(deleted) > 0
-
-    def _map_to_summary(self, data: dict) -> Summary:
-        """Función auxiliar para reconstruir el objeto Summary desde un JSON."""
-        return Summary(
+    def _map_to_document(self, data: dict) -> DocumentRecord:
+        """Función auxiliar (privada) para reconstruir la entidad de dominio desde el JSON crudo."""
+        return DocumentRecord(
             id=uuid.UUID(data["id"]),
             original_filename=data["original_filename"],
-            summary_text=data["summary_text"],
             full_text=data["full_text"],
             checksum=data["checksum"],
             created_at=datetime.fromisoformat(data["created_at"])

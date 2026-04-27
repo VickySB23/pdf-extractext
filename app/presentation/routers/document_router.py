@@ -1,118 +1,67 @@
 """
-Controlador REST para la gestión de resúmenes.
-Pertenece a la capa de Presentación: Recibe peticiones HTTP, 
-valida formatos y delega el trabajo pesado a la capa de Aplicación.
+Módulo de presentación (Controladores REST).
+Expone la interfaz de programación de aplicaciones (API) para las operaciones CRUD.
+Se encarga exclusivamente de recibir peticiones, validar formatos y retornar respuestas JSON.
 """
-
 from uuid import UUID
 from fastapi import APIRouter, File, UploadFile, HTTPException, Depends
-from app.application.services.summary_service import SummaryService
-from app.presentation.schemas.pdf_summary import (
-    SummaryResponse,
-    SummaryListResponse,
-    HealthResponse,
-)
+from app.application.services.document_service import DocumentService
+from app.presentation.schemas.document_schema import DocumentResponse, DocumentUpdateRequest
 
-# El prefix "/api" se aplica automáticamente a todas las rutas de este archivo
-router = APIRouter(prefix="/api", tags=["summaries"])
+router = APIRouter(prefix="/api", tags=["documents"])
 
-
-def get_summary_service() -> SummaryService:
-    """Inyecta el servicio de aplicación en los endpoints."""
-    from app.main import get_summary_service as _get_service
+def get_document_service() -> DocumentService:
+    """Inyecta el servicio orquestador en los endpoints para desacoplar las capas."""
+    from app.main import get_document_service as _get_service
     return _get_service()
 
-
-@router.post("/summarize", response_model=SummaryResponse)
-async def summarize_pdf(
-    file: UploadFile = File(...),
-    service: SummaryService = Depends(get_summary_service),
+@router.post("/documents", response_model=DocumentResponse)
+async def create_document_endpoint(
+    file: UploadFile = File(...), 
+    service: DocumentService = Depends(get_document_service)
 ):
     """
-    Recibe un documento físico (PDF), solicita su análisis y retorna el resumen estructurado.
-    Aplica validaciones de formato y contenido antes de delegar el proceso.
+    Endpoint para subir un archivo PDF.
+    Cumple con la restricción de validar el formato y procesar en memoria.
     """
     if not file.filename.endswith(".pdf"):
-        raise HTTPException(status_code=400, detail="Only PDF files are supported")
-
+        raise HTTPException(status_code=400, detail="Solo se admiten archivos PDF")
+    
     content = await file.read()
-    if len(content) == 0:
-        raise HTTPException(status_code=400, detail="Empty file uploaded")
-
     try:
-        summary = await service.create_summary(content, file.filename)
-        return SummaryResponse(
-            id=summary.id,
-            original_filename=summary.original_filename,
-            summary_text=summary.summary_text,
-            created_at=summary.created_at,
-        )
+        return await service.create_document(content, file.filename)
     except ValueError as e:
-        # Captura excepciones de negocio (como el error de duplicados) y las traduce a un error HTTP 400
+        # Se captura la excepción de la regla de negocio (Duplicado) y se devuelve código 400
         raise HTTPException(status_code=400, detail=str(e))
 
+@router.get("/documents", response_model=list[DocumentResponse])
+async def list_documents_endpoint(service: DocumentService = Depends(get_document_service)):
+    """Lista todos los documentos procesados en el sistema."""
+    return await service.list_documents()
 
-@router.get("/summaries", response_model=SummaryListResponse)
-async def list_summaries(
-    limit: int = 100,
-    service: SummaryService = Depends(get_summary_service),
+@router.get("/documents/{doc_id}", response_model=DocumentResponse)
+async def get_document_endpoint(doc_id: UUID, service: DocumentService = Depends(get_document_service)):
+    """Busca y retorna un documento específico por su ID."""
+    doc = await service.get_document(doc_id)
+    if not doc:
+        raise HTTPException(status_code=404, detail="Documento no encontrado")
+    return doc
+
+@router.put("/documents/{doc_id}", response_model=DocumentResponse)
+async def update_document_endpoint(
+    doc_id: UUID, 
+    req: DocumentUpdateRequest, 
+    service: DocumentService = Depends(get_document_service)
 ):
-    """Devuelve una lista de todos los resúmenes almacenados en la base de datos."""
-    summaries = await service.list_summaries(limit)
-    return SummaryListResponse(
-        summaries=[
-            SummaryResponse(
-                id=s.id,
-                original_filename=s.original_filename,
-                summary_text=s.summary_text,
-                created_at=s.created_at,
-            )
-            for s in summaries
-        ],
-        total=len(summaries),
-    )
+    """Permite la modificación manual del texto extraído de un documento (Update del CRUD)."""
+    doc = await service.update_document(doc_id, req.new_text)
+    if not doc:
+        raise HTTPException(status_code=404, detail="Documento no encontrado para actualizar")
+    return doc
 
-
-@router.get("/summaries/{summary_id}", response_model=SummaryResponse)
-async def get_summary(
-    summary_id: UUID,
-    service: SummaryService = Depends(get_summary_service),
-):
-    """Obtiene el detalle de un resumen específico mediante su identificador único (UUID)."""
-    summary = await service.get_summary(summary_id)
-    if not summary:
-        raise HTTPException(status_code=404, detail="Summary not found")
-    
-    return SummaryResponse(
-        id=summary.id,
-        original_filename=summary.original_filename,
-        summary_text=summary.summary_text,
-        created_at=summary.created_at,
-    )
-
-
-@router.get("/health", response_model=HealthResponse)
-async def health_check(service: SummaryService = Depends(get_summary_service)):
-    """Verifica el estado del sistema y la disponibilidad de la API de IA."""
-    ai_available = await service._ai_provider.health_check()
-    return HealthResponse(
-        status="healthy" if ai_available else "degraded",
-        ai_provider_available=ai_available,
-    )
-
-# Bug arreglado: Se quitó el "/api" redundante para que no quede "/api/api/summaries..."
-@router.delete("/summaries/{summary_id}")
-async def delete_summary(
-    summary_id: UUID,
-    service: SummaryService = Depends(get_summary_service)
-):
-    """
-    Elimina de forma permanente un resumen de la base de datos.
-    """
-    fue_borrado = await service.delete_summary(summary_id)
-    
-    if not fue_borrado:
-        # Estándar REST: Retornar 404 cuando se intenta operar sobre un recurso inexistente
-        raise HTTPException(status_code=404, detail="Resumen no encontrado en la base de datos")
-    
-    return {"message": "¡Resumen eliminado exitosamente!"}
+@router.delete("/documents/{doc_id}")
+async def delete_document_endpoint(doc_id: UUID, service: DocumentService = Depends(get_document_service)):
+    """Elimina un documento de la base de datos (Delete del CRUD)."""
+    if not await service.delete_document(doc_id):
+        raise HTTPException(status_code=404, detail="Documento no encontrado para eliminar")
+    return {"message": "Documento eliminado"}
