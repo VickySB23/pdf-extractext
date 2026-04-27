@@ -1,26 +1,19 @@
-"""Pydantic schemas for PDF summary operations."""
-
+"""
+Esquemas de validación de datos (DTOs) usando Pydantic.
+Garantizan que los datos que entran y salen de la API tengan el formato correcto.
+"""
 from datetime import datetime
 from uuid import UUID
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
-
-class SummaryRequest(BaseModel):
-    max_length: int = Field(default=500, ge=100, le=2000)
-
-
-class SummaryResponse(BaseModel):
+class DocumentResponse(BaseModel):
+    """Esquema de salida para un documento individual (Lo que devuelve el GET y POST)."""
     id: UUID
     original_filename: str
-    summary_text: str
+    full_text: str
+    checksum: str
     created_at: datetime
 
-
-class SummaryListResponse(BaseModel):
-    summaries: list[SummaryResponse]
-    total: int
-
-
-class HealthResponse(BaseModel):
-    status: str
-    ai_provider_available: bool
+class DocumentUpdateRequest(BaseModel):
+    """Esquema de entrada para actualizar el texto de un documento (Lo que pide el PUT)."""
+    new_text: str
