@@ -4,13 +4,12 @@ Aplica principios SOLID e Inversión de Dependencias.
 """
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
-from tinydb import TinyDB
-
 from app.core import get_settings
 from app.application.services.pdf_service import PDFService
 from app.application.services.document_service import DocumentService 
-from app.infrastructure.repositories.nosql_repository import TinyDBDocumentRepository
 from app.presentation.routers.document_router import router as document_router
+from motor.motor_asyncio import AsyncIOMotorClient
+from app.infrastructure.repositories.mongo_repository import MongoDocumentRepository
 
 # Variable global con nombre coherente
 _document_service: DocumentService | None = None
@@ -24,11 +23,15 @@ def get_document_service() -> DocumentService:
 def create_app_services() -> DocumentService:
     """Ensambla las capas de la aplicación siguiendo la arquitectura empresarial."""
     global _document_service
-    db = TinyDB('documents_db.json')
     
+    # 1. Conexión al servidor local de MongoDB
+    client = AsyncIOMotorClient('mongodb://localhost:27017')
+    db = client['pdf-extractext']
+    
+    # 2. Inyección de dependencias
     _document_service = DocumentService(
         pdf_service=PDFService(),
-        repository=TinyDBDocumentRepository(db),
+        repository=MongoDocumentRepository(db),
     )
     return _document_service
 

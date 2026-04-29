@@ -1,11 +1,7 @@
-"""PDF text extraction service."""
-
 import io
+import hashlib
 from dataclasses import dataclass
 from pypdf import PdfReader
-import hashlib
-from io import BytesIO
-
 
 @dataclass
 class ExtractedPDF:
@@ -15,25 +11,24 @@ class ExtractedPDF:
     character_count: int
     checksum: str
 
-
 class PDFService:
     def extract_text(self, file_content: bytes, filename: str) -> ExtractedPDF:
-        file_hash = hashlib.sha256(file_content).hexdigest()
+        pdf_stream = io.BytesIO(file_content)
+        reader = PdfReader(pdf_stream)
         
-        reader = PdfReader(io.BytesIO(file_content))
-        text_parts = []
-
+        extracted_text = ""
         for page in reader.pages:
-            page_text = page.extract_text()
-            if page_text:
-                text_parts.append(page_text)
-
-        full_text = "\n\n".join(text_parts)
-
+            text = page.extract_text()
+            if text:
+                extracted_text += text + "\n"
+                
+        clean_text = extracted_text.strip()
+        checksum = hashlib.sha256(clean_text.encode('utf-8')).hexdigest()
+        
         return ExtractedPDF(
             filename=filename,
-            text=full_text,
+            text=clean_text,
             page_count=len(reader.pages),
-            character_count=len(full_text),
-            checksum=file_hash,
+            character_count=len(clean_text),
+            checksum=checksum
         )

@@ -1,40 +1,38 @@
-"""
-Pruebas unitarias para el servicio de extracción de PDF.
-Verifica la lectura en memoria y el cálculo de la huella digital (checksum)
-aislando la dependencia de librerías externas mediante Mocks.
-"""
+import pytest
+import hashlib
 from unittest.mock import patch, MagicMock
 from app.application.services.pdf_service import PDFService
 
-def test_extract_text_in_memory():
-    """Verifica que se procesen las páginas correctamente desde un flujo de bytes."""
+@pytest.fixture
+def pdf_service():
+    return PDFService()
+
+@patch('app.application.services.pdf_service.PdfReader')
+def test_extract_text_success(mock_pdf_reader_class, pdf_service):
+    # 1. ARRANGE
+    mock_page_1 = MagicMock()
+    mock_page_1.extract_text.return_value = "Hola"
     
-    # 1. ARRANGE (Preparar: Crear instancias y simular la librería de lectura de PDFs)
-    pdf_service = PDFService()
-    dummy_bytes = b"contenido falso de pdf en bytes"
-    test_filename = "documento_prueba.pdf"
-
-    # Interceptamos "PdfReader" para que no intente leer un archivo real en disco
-    with patch("app.application.services.pdf_service.PdfReader") as MockReader:
-        mock_page_1 = MagicMock()
-        mock_page_1.extract_text.return_value = "Hola, esto es la pagina 1."
-        
-        mock_page_2 = MagicMock()
-        mock_page_2.extract_text.return_value = "Y esto es la pagina 2."
-        
-        mock_instance = MockReader.return_value
-        mock_instance.pages = [mock_page_1, mock_page_2]
-
-        # 2. ACT (Ejecutar: Llamamos a nuestro método de extracción)
-        result = pdf_service.extract_text(dummy_bytes, test_filename)
-        
-        # 3. ASSERT (Comprobar: Validamos las propiedades del PDF extraído)
-        assert result.filename == test_filename
-        assert result.page_count == 2
-        assert "pagina 1" in result.text
-        assert "pagina 2" in result.text
-        assert result.character_count == len(result.text)
-        
-        # Verificamos específicamente la regla de seguridad del checksum
-        assert hasattr(result, "checksum"), "El resultado debe incluir un checksum"
-        assert len(result.checksum) == 64  # Algoritmo SHA-256 (64 caracteres)
+    mock_page_2 = MagicMock()
+    mock_page_2.extract_text.return_value = "Mundo"
+    
+    mock_reader_instance = MagicMock()
+    mock_reader_instance.pages = [mock_page_1, mock_page_2]
+    
+    mock_pdf_reader_class.return_value = mock_reader_instance
+    
+    fake_pdf_bytes = b"bytes falsos de un pdf"
+    expected_text = "Hola\nMundo"
+    expected_checksum = hashlib.sha256(expected_text.encode('utf-8')).hexdigest()
+    
+    # 2. ACT
+    result = pdf_service.extract_text(fake_pdf_bytes, "documento.pdf")
+    
+    # 3. ASSERT
+    assert result.filename == "documento.pdf"
+    assert result.text == expected_text
+    assert result.page_count == 2
+    assert result.character_count == 10
+    assert result.checksum == expected_checksum
+    
+    mock_pdf_reader_class.assert_called_once()
