@@ -1,116 +1,184 @@
-# PDF Extractext - Etapa 1
+# PDF ExtractText
 
-Una API RESTful orientada a producción para la extracción de texto de archivos PDF, control de duplicados mediante checksum y persistencia en una base de datos NoSQL. 
+Un sistema de API REST que extrae texto de archivos PDF en memoria y gestiona los documentos utilizando bases de datos NoSQL.
 
-Este proyecto está diseñado siguiendo estrictamente los requerimientos de la Etapa 1, aplicando los principios **SOLID, KISS, DRY y YAGNI**, e implementando una **Arquitectura Limpia (Clean Architecture)**.
+**Desarrolladoras:** 
+* Julieta Bignet
+* Sanchez B. Victoria
 
+###### Estado Actual
+Requerimientos y Funcionalidades del Proyecto:
+
+* Arquitectura Limpia (Clean Architecture): Implementación de una estructura desacoplada en capas de Presentación, Aplicación e Infraestructura.
+* Extracción en Memoria (Stateless): Procesamiento de archivos PDF íntegramente en memoria RAM mediante pypdf, sin almacenamiento temporal en disco.
+* Persistencia NoSQL: Integración asíncrona con MongoDB para el almacenamiento persistente de los documentos procesados.
+* Control de Duplicados: Validación de redundancia mediante el cálculo de Checksum SHA-256 sobre el contenido extraído.
+* Operaciones CRUD: Implementación completa de endpoints para Cargar (Upload/Save), Buscar (Find), Actualizar (Update) y Eliminar (Delete) documentos.
+* Calidad de Software: Suite de pruebas unitarias y de integración bajo metodología TDD y validación de tipos estáticos.
 ---
 
-## 🏗️ Descripción General de la Arquitectura
+## 📖 Resumen
 
-El proyecto presenta una clara separación de responsabilidades estructurada en el módulo raíz `app/`:
+PDF ExtractText es una API REST desarrollada en Python que permite:
 
-* **Capa 1: Presentación (`app/presentation/`)**
-  * **Routers:** Manejadores de los endpoints HTTP (FastAPI) exponiendo el CRUD completo.
-  * **Schemas:** Modelos Pydantic estrictos para la validación de solicitudes (DTOs) y respuestas.
-  * *Regla:* Solo maneja el transporte HTTP, no contiene lógica de negocio.
+- **Subir** archivos PDF a través de una API REST.
+- **Extraer texto** de los PDFs directamente en memoria RAM usando `pypdf`.
+- **Prevenir duplicados** mediante el cálculo de un Checksum (SHA-256) sobre el texto extraído.
+- **Persistir** los datos extraídos de forma asíncrona utilizando MongoDB.
 
-* **Capa 2: Aplicación / Servicios (`app/application/`)**
-  * **Services:** Orquestación de la lógica de negocio (`PDFService`, `DocumentService`).
-  * **Interfaces:** Contratos abstractos (`DocumentRepository`) que definen el comportamiento esperado (Inversión de Dependencias).
+> **⚠️ Limitación Conocida (OCR):**
+> Si el PDF contiene solo imágenes o fue generado por un escáner físico sin texto digital inyectado, el sistema devolverá un texto vacío. Esto es el comportamiento esperado, ya que la herramienta extrae texto nativo de los metadatos del archivo y la implementación de un motor OCR (Reconocimiento Óptico de Caracteres) excede el alcance actual del proyecto (respetando el principio KISS).
 
-* **Capa 3: Infraestructura (`app/infrastructure/`)**
-  * **Repositories:** Capa de persistencia implementada con TinyDB (NoSQL).
-  * *Regla:* La extracción se procesa directamente en memoria sin guardar archivos temporales en el disco.
+## ✨ Características
 
----
+- Extracción de texto de PDF en memoria.
+- Persistencia de datos asíncrona.
+- API REST rápida y moderna.
+- Control estricto de duplicados mediante Huella Digital (Checksum).
+- Desarrollo Guiado por Pruebas (TDD) con un 100% de cobertura.
+- Diseño basado estrictamente en **Arquitectura Limpia** (Clean Architecture).
+- Código limpio aplicando principios SOLID, DRY, KISS y YAGNI.
 
-## 🚀 Inicio Rápido (Desarrollo Local)
+## 🛠️ Stack Tecnológico
 
-### Requisitos Previos
-* Python 3.11+
-* Herramienta `uv` (Gestor de dependencias de Astral.sh)
+| Categoría | Tecnología |
+|----------|------------|
+| Lenguaje | Python 3.13+ |
+| Framework Web | FastAPI |
+| Procesamiento PDF | pypdf |
+| Base de Datos | MongoDB (Driver `motor`) |
+| Gestión de Entorno | UV |
+| Testing | Pytest, Pytest-asyncio, Mongomock-motor |
 
-### 1. Clonar y Configurar el Entorno
+### Dependencias Principales
 
-```bash
-# Navegar al directorio del proyecto
-cd pdf-extractext
+- **fastapi**: Framework web moderno, rápido y asíncrono.
+- **uvicorn**: Servidor ASGI para correr la aplicación.
+- **pypdf**: Procesamiento y extracción de texto de PDF.
+- **motor**: Driver asíncrono oficial de MongoDB.
+- **pytest / pytest-asyncio**: Framework de pruebas unitarias y de integración.
+- **mongomock-motor**: Simulador asíncrono de base de datos para testing aislado.
 
-# Sincronizar dependencias y crear el entorno virtual automáticamente con uv
-uv sync
+## 📂 Estructura del Proyecto
 
-# Activar el entorno virtual
-# En Windows:
-.venv\Scripts\activate
-# En macOS/Linux:
-source .venv/bin/activate
-2. Ejecutar la Aplicación
-Bash
-# Iniciar el servidor de desarrollo usando uv
-uv run uvicorn app.main:app --reload
-👀 Cómo usar la API (Interfaz Interactiva)
-Al ser una API RESTful pura, el proyecto no cuenta con pantallas tradicionales, sino que utiliza Swagger UI, una interfaz gráfica interactiva autogenerada por FastAPI que es el estándar de la industria para probar endpoints.
-
-Una vez que el servidor esté corriendo en tu terminal, abre tu navegador web y dirígete a:
-👉 http://localhost:8000/docs
-
-Verás un panel con el título "Sistema de Gestión de Documentos PDF" y una lista de barras de colores que representan el CRUD (POST, GET, PUT, DELETE).
-
-Para probar la extracción de un PDF:
-
-Haz clic en la barra verde POST /api/documents.
-
-Presiona el botón derecho que dice "Try it out" (Pruébalo).
-
-Selecciona un archivo PDF de tu computadora en el campo de subida (file).
-
-Haz clic en el botón azul "Execute" (Ejecutar).
-
-En la sección de respuestas (Server Response), verás el código HTTP 200 de éxito y un JSON con el texto puro extraído, su Checksum SHA-256 (para control de duplicados) y el ID guardado en la base de datos local (documents_db.json).
-
-📂 Estructura del Proyecto
-Plaintext
+```text
 pdf-extractext/
-│
-├── app/                                 # 📦 Código principal de la aplicación
-│   ├── application/                     # ⚙️ Lógica de negocio (Casos de uso y Contratos)
-│   │   ├── interfaces/
-│   │   │   └── document_repository.py   # Contrato CRUD para la base de datos
-│   │   ├── services/
-│   │   │   ├── document_service.py      # Orquestador del flujo y reglas (Anti-duplicados)
-│   │   │   └── pdf_service.py           # Lógica pura de extracción de texto PDF en memoria
-│   │
-│   ├── core/                            # 🔧 Configuraciones globales (Settings)
-│   │
-│   ├── infrastructure/                  # 🔌 Conexiones al mundo exterior (Base de datos)
-│   │   └── repositories/
-│   │       └── nosql_repository.py      # Persistencia en NoSQL usando TinyDB
-│   │
-│   ├── presentation/                    # 🌐 Interfaz hacia el usuario (API REST)
-│   │   ├── routers/
-│   │   │   └── document_router.py       # Endpoints REST (GET, POST, PUT, DELETE)
-│   │   ├── schemas/
-│   │   │   └── document_schema.py       # DTOs y validación de tipos con Pydantic
-│   │   └── templates/
-│   │       └── index.html               # Interfaz visual básica
-│   │
-│   └── main.py                          # Ensamblador de Inyección de Dependencias y Entrypoint
-│
-├── tests/                               # 🧪 Pruebas automatizadas (TDD)
-│   ├── test_api.py                      # Pruebas de integración de Endpoints
-│   ├── test_document_service.py         # Pruebas unitarias de orquestación
-│   ├── test_nosql_repository.py         # Pruebas de base de datos
-│   └── test_pdf_service.py              # Pruebas de extracción y checksum
-│
-├── documents_db.json                    # 💾 Base de datos física NoSQL autogenerada
-├── pyproject.toml                       # Gestión de dependencias (uv)
-└── README.md                            # Presentación y manual del proyecto
-🧪 Metodología de Desarrollo: TDD
-Este proyecto se construyó bajo el enfoque TDD (Test-Driven Development), garantizando una cobertura total de las reglas de negocio, incluyendo la verificación obligatoria para evitar el procesamiento de archivos duplicados.
+├── app/
+│   ├── main.py                 
+│   ├── core/                   
+│   ├── application/            
+│   │   ├── interfaces/         
+│   │   └── services/           
+│   ├── infrastructure/         
+│   │   └── repositories/       
+│   │       └── mongo_repository.py
+│   └── presentation/           
+│       ├── routers/            
+│       └── schemas/            
+├── tests/                      
+│   ├── test_api.py
+│   ├── test_document_service.py
+│   ├── test_mongo_repository.py
+│   └── test_pdf_service.py
+├── pyproject.toml              
+└── README.md
+```
+### Descripción de Capas (Arquitectura Limpia)
 
-Ejecutar Pruebas:
+- Presentation (Presentación): Maneja las peticiones HTTP, valida los datos de entrada/salida usando Pydantic y enruta hacia los servicios.
+- Application (Aplicación/Dominio): Contiene la lógica de negocio pura. No sabe que existe FastAPI ni MongoDB. Define las reglas mediante DocumentService y PDFService.
+- Infrastructure (Infraestructura): Implementa los contratos definidos por la aplicación. Aquí reside la conexión real a MongoDB mediante el driver motor.
 
+### ⚙️ Requisitos y Configuración
+
+## Requisitos del Sistema
+- SO: Windows 11 / Linux / macOS.
+- Python: Versión 3.13 o superior.
+- MongoDB: Instancia activa en el puerto 27017 (Nativo o vía Docker).
+- Instalación Directa (con UV)
+- Instalar dependencias del proyecto:Bashuv sync
+  
+## Instalar herramientas de desarrollo:
+````
 Bash
-# Ejecutar toda la suite de pruebas unitarias y de integración
+uv sync --extra dev
+````
+
+### 🚀 Ejecución
+## Iniciar el servidor de desarrollo:
+```
+Bash
+uv run uvicorn app.main:app --reload
+```
+La API estará disponible en http://localhost:8000. Al acceder, el sistema redirigirá automáticamente a la documentación interactiva:
+Swagger UI: http://localhost:8000/docs
+
+### 📡 Uso de la API
+## Endpoints principales
+
+| Método | Endpoint                 | Acción                                                       |
+|--------|--------------------------|--------------------------------------------------------------|
+| POST   | `/docs/documents`        | Sube un PDF, extrae texto y lo guarda                       |
+| GET    | `/docs/documents/{id}`   | Recupera la información de un documento                     |
+| PUT    | `/docs/documents/{id}`   | Actualiza el texto extraído                                 |
+| DELETE | `/docs/documents/{id}`   | Elimina un registro del sistema                             |
+
+## Nota técnica
+
+El sistema utiliza checksum **SHA-256** sobre el texto extraído.  
+Si intentas subir un documento diferente pero que contiene exactamente el mismo texto que uno ya registrado, el sistema lo detectará como duplicado para optimizar el almacenamiento.
+
+### 🧪 Pruebas Automatizadas
+Se ha implementado una suite completa de pruebas que garantiza el funcionamiento de cada capa de forma aislada.
+Ejecutar todos los tests:
+```
+Bash
 uv run pytest
+```
+### 📡 Uso de la API (Interfaz Interactiva)
+Por decisiones arquitectónicas y estándares de la industria (KISS), el sistema no cuenta con un frontend tradicional en HTML (de momento), sino que utiliza Swagger UI.
+
+Flujo de operación básico:
+1. Ingrese a http://127.0.0.1:8000/docs desde su navegador
+2. Localice el método HTTP de interés (por ejemplo, el POST para crear un documento).
+3. Haga clic en el botón "Try it out".
+4. Adjunte un archivo PDF válido en el formulario.
+5. Presione el botón "Execute".
+
+## Formato de Respuesta Esperada (Ejemplo POST)
+Si el documento se procesa correctamente y no es un duplicado, el servidor devolverá un código HTTP 200 con la siguiente estructura:
+```
+JSON
+{
+  "id": "123e4567-e89b-12d3-a456-426614174000",
+  "original_filename": "documento.pdf",
+  "full_text": "Texto completo extraído del documento...",
+  "checksum": "a8b9c1d2e3f4g5...",
+  "created_at": "2026-04-29T15:30:00Z"
+}
+```
+
+### 🧪 Pruebas (Testing)
+El proyecto cuenta con una suite de pruebas robusta que aísla la base de datos utilizando mongomock-motor y aplica simulación de objetos (Mocks) para garantizar la fiabilidad del código.
+
+## Ejecutar toda la suite de pruebas:
+```
+Bash
+uv run pytest
+```
+
+### 🧠 Metodología y Diseño
+## TDD (Test-Driven Development): 
+El proyecto sigue el ciclo Red-Green-Refactor:
+1. Red: Escribir pruebas que fallan inicialmente.
+2. Green: Implementar el código mínimo para pasar las pruebas.
+3. Refactor: Mejorar el código y la arquitectura manteniendo las pruebas en verde.
+
+## Principios de Diseño Aplicados
+
+| Principio | Descripción en el Proyecto |
+|----------|----------------------------|
+| KISS     | Se mantuvo la simplicidad evitando integrar motores OCR pesados en la Etapa 1. |
+| DRY      | La lógica de extracción y cálculo de hashes está centralizada y no se repite. |
+| YAGNI    | No se añadieron validaciones binarias de bajo nivel que no fueron solicitadas en los requerimientos core. |
+| SOLID    | Uso intensivo de Single Responsibility y Dependency Inversion para desacoplar MongoDB de la lógica de negocio. |
