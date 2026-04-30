@@ -15,12 +15,10 @@ async def test_create_document_orchestration():
     mock_pdf_service = MagicMock()
     # Aquí estaba el error: Agregamos los parámetros que faltaban
     mock_pdf_service.extract_text.return_value = ExtractedPDF(
-        filename="test.pdf", 
-        text="texto extraido", 
-        page_count=1, 
-        character_count=14,
-        checksum="abcd1234"
-    )
+            filename="test.pdf",
+            text="texto extraido",
+            checksum="abcd1234"
+        )
     
     mock_repository = AsyncMock()
     mock_repository.save.side_effect = lambda doc: doc 

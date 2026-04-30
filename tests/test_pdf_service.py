@@ -29,10 +29,9 @@ def test_extract_text_success(mock_pdf_reader_class, pdf_service):
     result = pdf_service.extract_text(fake_pdf_bytes, "documento.pdf")
     
     # 3. ASSERT
+    # 3. ASSERT
     assert result.filename == "documento.pdf"
     assert result.text == expected_text
-    assert result.page_count == 2
-    assert result.character_count == 10
     assert result.checksum == expected_checksum
     
     mock_pdf_reader_class.assert_called_once()

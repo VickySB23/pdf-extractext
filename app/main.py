@@ -25,8 +25,9 @@ def create_app_services() -> DocumentService:
     global _document_service
     
     # 1. Conexión al servidor local de MongoDB
-    client = AsyncIOMotorClient('mongodb://localhost:27017')
-    db = client['pdf-extractext']
+    settings = get_settings()
+    client = AsyncIOMotorClient(settings.mongo_uri)
+    db = client[settings.mongo_db_name]
     
     # 2. Inyección de dependencias
     _document_service = DocumentService(

@@ -4,6 +4,7 @@ Expone la interfaz de programación de aplicaciones (API) para las operaciones C
 Se encarga exclusivamente de recibir peticiones, validar formatos y retornar respuestas JSON.
 """
 from uuid import UUID
+import asyncio
 from fastapi import APIRouter, File, UploadFile, HTTPException, Depends
 from app.application.services.document_service import DocumentService
 from app.presentation.schemas.document_schema import DocumentResponse, DocumentUpdateRequest

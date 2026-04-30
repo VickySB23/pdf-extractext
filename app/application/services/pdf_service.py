@@ -7,8 +7,6 @@ from pypdf import PdfReader
 class ExtractedPDF:
     filename: str
     text: str
-    page_count: int
-    character_count: int
     checksum: str
 
 class PDFService:
@@ -16,19 +14,17 @@ class PDFService:
         pdf_stream = io.BytesIO(file_content)
         reader = PdfReader(pdf_stream)
         
-        extracted_text = ""
+        pages_text = []
         for page in reader.pages:
             text = page.extract_text()
             if text:
-                extracted_text += text + "\n"
+                pages_text.append(text)
                 
-        clean_text = extracted_text.strip()
+        clean_text = "\n".join(pages_text).strip()
         checksum = hashlib.sha256(clean_text.encode('utf-8')).hexdigest()
         
         return ExtractedPDF(
             filename=filename,
             text=clean_text,
-            page_count=len(reader.pages),
-            character_count=len(clean_text),
             checksum=checksum
         )
