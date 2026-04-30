@@ -24,14 +24,18 @@ async def create_document_endpoint(
     Endpoint para subir un archivo PDF.
     Cumple con la restricción de validar el formato y procesar en memoria.
     """
-    if not file.filename.endswith(".pdf"):
+    safe_filename = file.filename or "documento.pdf"
+    if not safe_filename.endswith(".pdf"):
         raise HTTPException(status_code=400, detail="Solo se admiten archivos PDF")
     
     content = await file.read()
+    
+    # El try debe estar a la misma altura que content
     try:
-        return await service.create_document(content, file.filename)
+        # Esto sí va con sangría hacia adentro
+        return await service.create_document(content, safe_filename)
+    # El except a la misma altura que el try
     except ValueError as e:
-        # Se captura la excepción de la regla de negocio (Duplicado) y se devuelve código 400
         raise HTTPException(status_code=400, detail=str(e))
 
 @router.get("/documents", response_model=list[DocumentResponse])
