@@ -1,0 +1,28 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pdf_extract_api
+    ports:
+      - "8000:8000"
+    environment:
+      - MONGO_URI=mongodb://db:27017
+      - DB_NAME=pdf_db
+    depends_on:
+      - db
+    volumes:
+      - ./app:/app/app
+    command: uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  db:
+    image: mongo:7.0
+    container_name: pdf_extract_mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    restart: unless-stopped
+
+volumes:
+  mongo_data:
