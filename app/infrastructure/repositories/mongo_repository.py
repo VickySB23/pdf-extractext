@@ -4,13 +4,10 @@ from motor.motor_asyncio import AsyncIOMotorDatabase
 from app.application.interfaces.document_repository import DocumentRepository, DocumentRecord
 
 class MongoDocumentRepository(DocumentRepository):
-    """Implementación asíncrona de MongoDB para el repositorio de documentos."""
-    
     def __init__(self, db: AsyncIOMotorDatabase):
         self._collection = db["documents"]
 
     async def save(self, document: DocumentRecord) -> DocumentRecord:
-        # Usamos el ID que ya trae el documento (convertido a string para Mongo)
         doc_dict = {
             "_id": str(document.id),
             "original_filename": document.original_filename,
@@ -43,7 +40,6 @@ class MongoDocumentRepository(DocumentRepository):
         return result.deleted_count > 0
 
     async def exists_by_checksum(self, checksum: str) -> bool:
-        # Validación súper rápida de MongoDB para la regla de duplicados
         count = await self._collection.count_documents({"checksum": checksum}, limit=1)
         return count > 0
 
