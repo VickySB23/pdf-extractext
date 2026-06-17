@@ -6,34 +6,19 @@ import asyncio
 from uuid import UUID
 from app.application.interfaces.document_repository import DocumentRecord, DocumentRepository
 from app.application.services.pdf_service import PDFService
+from app.core.logger import logger
 
 class DocumentService:
-    """
-    Coordina las operaciones sobre los documentos interactuando con el extractor de PDF
-    y la base de datos, sin conocer los detalles de implementación de ninguno.
-    """
     def __init__(self, pdf_service: PDFService, repository: DocumentRepository):
         self._pdf_service = pdf_service
         self._repository = repository
 
     async def create_document(self, file_content: bytes, filename: str) -> DocumentRecord:
-        """
-        Procesa un nuevo archivo PDF, extrae su texto y lo guarda en la base de datos.
-
-        Args:
-            file_content: El contenido binario del archivo PDF cargado en memoria.
-            filename: El nombre original del archivo subido por el usuario.
-
-        Returns:
-            DocumentRecord: La entidad del documento guardado con su ID y metadatos.
-
-        Raises:
-            ValueError: Si el documento ya existe en la base de datos (Regla de negocio anti-duplicados).
-        """
+        logger.info(f"Iniciando procesamiento del documento: '{filename}'")
         extracted = await asyncio.to_thread(self._pdf_service.extract_text, file_content, filename)
         
-        # Validamos la regla de negocio del proyecto: evitar duplicados usando el checksum
         if await self._repository.exists_by_checksum(extracted.checksum):
+            logger.warning(f"Rechazado: El documento '{filename}' ya existe (Duplicado de Checksum).")
             raise ValueError("Un documento con este mismo contenido ya existe en la base de datos.")
         
         document = DocumentRecord(
@@ -43,7 +28,10 @@ class DocumentService:
             checksum=extracted.checksum,
             created_at=None,
         )
-        return await self._repository.save(document)
+        
+        saved_doc = await self._repository.save(document)
+        logger.info(f"Documento '{filename}' guardado exitosamente con ID: {saved_doc.id}")
+        return saved_doc
 
     async def get_document(self, doc_id: UUID) -> DocumentRecord | None:
         """Recupera un documento específico mediante su identificador único."""
@@ -55,8 +43,14 @@ class DocumentService:
     
     async def update_document(self, doc_id: UUID, new_text: str) -> DocumentRecord | None:
         """Actualiza el texto extraído de un documento existente."""
+        logger.info(f"Actualizando texto del documento con ID: {doc_id}")
         return await self._repository.update(doc_id, new_text)
     
     async def delete_document(self, doc_id: UUID) -> bool:
         """Elimina un documento del sistema físico de forma permanente."""
-        return await self._repository.delete(doc_id)
+        result = await self._repository.delete(doc_id)
+        if result:
+            logger.info(f"Documento con ID {doc_id} eliminado correctamente.")
+        else:
+            logger.warning(f"Intento de eliminar documento inexistente (ID: {doc_id})")
+        return result
