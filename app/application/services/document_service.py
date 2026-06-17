@@ -3,6 +3,7 @@ Módulo de servicios de aplicación para la gestión de documentos.
 Actúa como orquestador de la lógica de negocio, aplicando el principio de Responsabilidad Única (SRP).
 """
 import asyncio
+import uuid
 from uuid import UUID
 from app.application.interfaces.document_repository import DocumentRecord, DocumentRepository
 from app.application.services.pdf_service import PDFService
@@ -22,7 +23,7 @@ class DocumentService:
             raise ValueError("Un documento con este mismo contenido ya existe en la base de datos.")
         
         document = DocumentRecord(
-            id=None,
+            id=uuid.uuid4(),
             original_filename=filename,
             full_text=extracted.text,
             checksum=extracted.checksum,
