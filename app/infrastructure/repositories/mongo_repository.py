@@ -1,9 +1,9 @@
 import uuid
 from datetime import datetime, timezone
 from motor.motor_asyncio import AsyncIOMotorDatabase
-from app.application.interfaces.document_repository import DocumentRepository, DocumentRecord
+from app.application.interfaces.document_repository import DocumentRecord
 
-class MongoDocumentRepository(DocumentRepository):
+class MongoDocumentRepository:
     def __init__(self, db: AsyncIOMotorDatabase):
         self._collection = db["documents"]
 

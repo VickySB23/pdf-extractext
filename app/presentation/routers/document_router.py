@@ -4,17 +4,15 @@ Expone la interfaz de programación de aplicaciones (API) para las operaciones C
 Se encarga exclusivamente de recibir peticiones, validar formatos y retornar respuestas JSON.
 """
 from uuid import UUID
-import asyncio
-from fastapi import APIRouter, File, UploadFile, HTTPException, Depends
+from fastapi import APIRouter, File, UploadFile, HTTPException, Depends, Request
 from app.application.services.document_service import DocumentService
 from app.presentation.schemas.document_schema import DocumentResponse, DocumentUpdateRequest
 
 router = APIRouter(prefix="/api", tags=["documents"])
 
-def get_document_service() -> DocumentService:
+def get_document_service(request: Request) -> DocumentService:
     """Inyecta el servicio orquestador en los endpoints para desacoplar las capas."""
-    from app.main import get_document_service as _get_service
-    return _get_service()
+    return request.app.state.document_service
 
 @router.post("/documents", response_model=DocumentResponse)
 async def create_document_endpoint(
@@ -31,11 +29,8 @@ async def create_document_endpoint(
     
     content = await file.read()
     
-    # El try debe estar a la misma altura que content
     try:
-        # Esto sí va con sangría hacia adentro
         return await service.create_document(content, safe_filename)
-    # El except a la misma altura que el try
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 

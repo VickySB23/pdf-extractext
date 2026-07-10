@@ -10,7 +10,7 @@ from uuid import UUID
 @dataclass
 class DocumentRecord:
     """Entidad principal: Representa el texto extraído del PDF y su checksum."""
-    id: UUID | None
+    id: UUID
     original_filename: str
     full_text: str
     checksum: str

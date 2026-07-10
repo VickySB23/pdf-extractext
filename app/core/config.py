@@ -1,10 +1,22 @@
-import os
-from dotenv import load_dotenv
+"""Application settings."""
 
-load_dotenv()
+from functools import lru_cache
+from pathlib import Path
 
-class Settings:
-    MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017")
-    MONGO_DB_NAME = os.getenv("MONGO_DB_NAME", "pdf-extractext")
-    SECRET_KEY = os.getenv("SECRET_KEY", "clave_por_defecto_cambiar_en_produccion")
-settings = Settings()
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class Settings(BaseSettings):
+    upload_dir: Path = Path("uploads")
+    mongo_uri: str = "mongodb://localhost:27017"
+    mongo_db_name: str = "pdf-extractext"
+
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
+
+
+@lru_cache
+def get_settings() -> Settings:
+    return Settings()
+
+
+settings = get_settings()
