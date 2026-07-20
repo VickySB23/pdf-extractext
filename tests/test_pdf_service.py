@@ -35,3 +35,54 @@ def test_extract_text_success(mock_pdf_reader_class, pdf_service):
     assert result.checksum == expected_checksum
     
     mock_pdf_reader_class.assert_called_once()
+
+@patch('app.application.services.pdf_service.PdfReader')
+def test_extract_text_raises_value_error_when_pdf_reader_fails(mock_pdf_reader_class, pdf_service):
+    mock_pdf_reader_class.side_effect = Exception("invalid pdf")
+
+    with pytest.raises(ValueError) as exc_info:
+        pdf_service.extract_text(b"contenido invalido", "corrupto.pdf")
+
+    assert "No se pudo procesar el archivo PDF" in str(exc_info.value)
+
+@patch('app.application.services.pdf_service.hashlib.sha256')
+@patch('app.application.services.pdf_service.PdfReader')
+def test_extract_text_raises_specific_value_error_when_pdf_is_encrypted(
+    mock_pdf_reader_class,
+    mock_sha256,
+    pdf_service,
+):
+    mock_reader_instance = MagicMock()
+    mock_reader_instance.is_encrypted = True
+    mock_reader_instance.pages = [MagicMock()]
+    mock_pdf_reader_class.return_value = mock_reader_instance
+
+    with pytest.raises(ValueError) as exc_info:
+        pdf_service.extract_text(b"%PDF-1.7 protegido", "protegido.pdf")
+
+    assert "El PDF está protegido con contraseña" in str(exc_info.value)
+    mock_reader_instance.pages[0].extract_text.assert_not_called()
+    mock_sha256.assert_not_called()
+
+@patch('app.application.services.pdf_service.hashlib.sha256')
+@patch('app.application.services.pdf_service.PdfReader')
+def test_extract_text_raises_value_error_when_pages_have_no_text(
+    mock_pdf_reader_class,
+    mock_sha256,
+    pdf_service,
+):
+    mock_page_with_none = MagicMock()
+    mock_page_with_none.extract_text.return_value = None
+
+    mock_page_with_empty_text = MagicMock()
+    mock_page_with_empty_text.extract_text.return_value = ""
+
+    mock_reader_instance = MagicMock()
+    mock_reader_instance.pages = [mock_page_with_none, mock_page_with_empty_text]
+    mock_pdf_reader_class.return_value = mock_reader_instance
+
+    with pytest.raises(ValueError) as exc_info:
+        pdf_service.extract_text(b"%PDF contenido sin texto", "escaneado.pdf")
+
+    assert "No se encontró texto extraíble" in str(exc_info.value)
+    mock_sha256.assert_not_called()

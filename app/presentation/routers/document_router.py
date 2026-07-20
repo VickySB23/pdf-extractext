@@ -24,10 +24,15 @@ async def create_document_endpoint(
     Cumple con la restricción de validar el formato y procesar en memoria.
     """
     safe_filename = file.filename or "documento.pdf"
-    if not safe_filename.endswith(".pdf"):
+    if not safe_filename.lower().endswith(".pdf"):
         raise HTTPException(status_code=400, detail="Solo se admiten archivos PDF")
     
     content = await file.read()
+    if not content:
+        raise HTTPException(status_code=400, detail="El archivo está vacío")
+
+    if not content.startswith(b"%PDF-"):
+        raise HTTPException(status_code=400, detail="El contenido no corresponde a un PDF válido")
     
     try:
         return await service.create_document(content, safe_filename)

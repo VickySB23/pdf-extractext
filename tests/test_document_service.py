@@ -37,3 +37,19 @@ async def test_create_document_orchestration():
     # Verificamos la orquestación
     mock_pdf_service.extract_text.assert_called_once()
     mock_repository.save.assert_called_once()
+
+@pytest.mark.asyncio
+async def test_create_document_does_not_save_when_pdf_has_no_text():
+    mock_pdf_service = MagicMock()
+    mock_pdf_service.extract_text.side_effect = ValueError("No se encontró texto extraíble en el PDF.")
+
+    mock_repository = AsyncMock()
+
+    service = DocumentService(mock_pdf_service, mock_repository)
+
+    with pytest.raises(ValueError) as exc_info:
+        await service.create_document(b"%PDF-1.7 sin texto", "escaneado.pdf")
+
+    assert "No se encontró texto extraíble" in str(exc_info.value)
+    mock_repository.exists_by_checksum.assert_not_called()
+    mock_repository.save.assert_not_called()
