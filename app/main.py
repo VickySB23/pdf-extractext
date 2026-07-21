@@ -11,9 +11,10 @@ from app.core import get_settings
 from app.core.logger import logger
 from app.infrastructure.repositories.mongo_repository import MongoDocumentRepository
 from app.presentation.routers.document_router import router as document_router
+from app.presentation.routers.health_router import router as health_router
 
 
-def create_app_services() -> DocumentService:
+def create_app_services() -> tuple[DocumentService, AsyncIOMotorClient]:
     """Build application services and wire their infrastructure dependencies."""
     settings = get_settings()
     logger.info(f"Conectando a MongoDB en: {settings.mongo_uri} (DB: {settings.mongo_db_name})")
@@ -24,17 +25,22 @@ def create_app_services() -> DocumentService:
         repository=MongoDocumentRepository(db),
     )
     logger.info("Servicios ensamblados e inyectados correctamente.")
-    return document_service
+    return document_service, client
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifecycle."""
     logger.info("--- Iniciando Sistema de Gestión de Documentos PDF ---")
-    app.state.document_service = create_app_services()
+    document_service, mongo_client = create_app_services()
+    app.state.document_service = document_service
+    app.state.mongo_client = mongo_client
     get_settings().upload_dir.mkdir(parents=True, exist_ok=True)
-    yield
-    logger.info("--- Sistema apagado correctamente ---")
+    try:
+        yield
+    finally:
+        app.state.mongo_client.close()
+        logger.info("--- Sistema apagado correctamente ---")
 
 
 app = FastAPI(
@@ -44,3 +50,4 @@ app = FastAPI(
 )
 
 app.include_router(document_router)
+app.include_router(health_router)

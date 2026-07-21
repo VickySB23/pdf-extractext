@@ -9,6 +9,7 @@ from fastapi.testclient import TestClient
 from unittest.mock import AsyncMock
 from app.main import app
 from app.application.interfaces.document_repository import DocumentRecord
+from app.core import get_settings
 from app.presentation.routers.document_router import get_document_service
 
 # 1. ARRANGE
@@ -73,6 +74,19 @@ def test_create_document_rejects_file_without_pdf_magic_bytes():
 
     assert response.status_code == 400
     assert response.json()["detail"] == "El contenido no corresponde a un PDF válido"
+    mock_service.create_document.assert_not_called()
+
+def test_create_document_rejects_file_exceeding_max_size():
+    mock_service.create_document.reset_mock()
+    oversized_pdf = b"%PDF-" + b"x" * get_settings().max_upload_size_bytes
+
+    response = client.post(
+        "/api/documents",
+        files={"file": ("large.pdf", oversized_pdf, "application/pdf")},
+    )
+
+    assert response.status_code == 413
+    assert "tamaño máximo permitido" in response.json()["detail"]
     mock_service.create_document.assert_not_called()
 
 def test_create_document_returns_400_when_pdf_has_no_extractable_text():

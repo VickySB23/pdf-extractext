@@ -6,6 +6,7 @@ Se encarga exclusivamente de recibir peticiones, validar formatos y retornar res
 from uuid import UUID
 from fastapi import APIRouter, File, UploadFile, HTTPException, Depends, Request
 from app.application.services.document_service import DocumentService
+from app.core import get_settings
 from app.presentation.schemas.document_schema import DocumentResponse, DocumentUpdateRequest
 
 router = APIRouter(prefix="/api", tags=["documents"])
@@ -30,6 +31,14 @@ async def create_document_endpoint(
     content = await file.read()
     if not content:
         raise HTTPException(status_code=400, detail="El archivo está vacío")
+
+    max_upload_size_bytes = get_settings().max_upload_size_bytes
+    if len(content) > max_upload_size_bytes:
+        max_upload_size_mb = max_upload_size_bytes // (1024 * 1024)
+        raise HTTPException(
+            status_code=413,
+            detail=f"El archivo excede el tamaño máximo permitido de {max_upload_size_mb} MB",
+        )
 
     if not content.startswith(b"%PDF-"):
         raise HTTPException(status_code=400, detail="El contenido no corresponde a un PDF válido")

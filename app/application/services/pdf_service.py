@@ -22,6 +22,10 @@ class PDFService:
             pdf_stream = io.BytesIO(file_content)
             reader = PdfReader(pdf_stream)
 
+            if reader.is_encrypted:
+                logger.warning(f"El archivo '{filename}' está protegido con contraseña.")
+                raise ValueError("El PDF está protegido con contraseña.")
+
             pages_text = []
             for page in reader.pages:
                 text = page.extract_text()

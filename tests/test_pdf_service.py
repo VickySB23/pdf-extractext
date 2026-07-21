@@ -17,6 +17,7 @@ def test_extract_text_success(mock_pdf_reader_class, pdf_service):
     mock_page_2.extract_text.return_value = "Mundo"
     
     mock_reader_instance = MagicMock()
+    mock_reader_instance.is_encrypted = False
     mock_reader_instance.pages = [mock_page_1, mock_page_2]
     
     mock_pdf_reader_class.return_value = mock_reader_instance
@@ -78,6 +79,7 @@ def test_extract_text_raises_value_error_when_pages_have_no_text(
     mock_page_with_empty_text.extract_text.return_value = ""
 
     mock_reader_instance = MagicMock()
+    mock_reader_instance.is_encrypted = False
     mock_reader_instance.pages = [mock_page_with_none, mock_page_with_empty_text]
     mock_pdf_reader_class.return_value = mock_reader_instance
 
