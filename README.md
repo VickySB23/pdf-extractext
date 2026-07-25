@@ -1,184 +1,292 @@
 # PDF ExtractText
 
-Un sistema de API REST que extrae texto de archivos PDF en memoria y gestiona los documentos utilizando bases de datos NoSQL.
+API REST monolitica para cargar archivos PDF, extraer texto nativo en memoria y persistir documentos procesados en MongoDB.
 
-**Desarrolladoras:** 
-* Julieta Bignet
-* Sanchez B. Victoria
+**Desarrolladoras:**
 
-###### Estado Actual
-Requerimientos y Funcionalidades del Proyecto:
+- Julieta Bignet
+- Sanchez B. Victoria
 
-* Arquitectura Limpia (Clean Architecture): Implementación de una estructura desacoplada en capas de Presentación, Aplicación e Infraestructura.
-* Extracción en Memoria (Stateless): Procesamiento de archivos PDF íntegramente en memoria RAM mediante pypdf, sin almacenamiento temporal en disco.
-* Persistencia NoSQL: Integración asíncrona con MongoDB para el almacenamiento persistente de los documentos procesados.
-* Control de Duplicados: Validación de redundancia mediante el cálculo de Checksum SHA-256 sobre el contenido extraído.
-* Operaciones CRUD: Implementación completa de endpoints para Cargar (Upload/Save), Buscar (Find), Actualizar (Update) y Eliminar (Delete) documentos.
-* Calidad de Software: Suite de pruebas unitarias y de integración bajo metodología TDD y validación de tipos estáticos.
----
+## Objetivo
 
-## 📖 Resumen
+El objetivo del proyecto es ofrecer un backend simple y mantenible para gestionar documentos PDF:
 
-PDF ExtractText es una API REST desarrollada en Python que permite:
+- recibir archivos PDF por HTTP;
+- validar que el archivo sea un PDF procesable;
+- extraer texto nativo con `pypdf`, sin OCR;
+- calcular un checksum SHA-256 del texto extraido;
+- evitar documentos duplicados por checksum;
+- guardar, consultar, listar, actualizar y eliminar documentos en MongoDB.
 
-- **Subir** archivos PDF a través de una API REST.
-- **Extraer texto** de los PDFs directamente en memoria RAM usando `pypdf`.
-- **Prevenir duplicados** mediante el cálculo de un Checksum (SHA-256) sobre el texto extraído.
-- **Persistir** los datos extraídos de forma asíncrona utilizando MongoDB.
+## Estado actual
 
-> **⚠️ Limitación Conocida (OCR):**
-> Si el PDF contiene solo imágenes o fue generado por un escáner físico sin texto digital inyectado, el sistema devolverá un texto vacío. Esto es el comportamiento esperado, ya que la herramienta extrae texto nativo de los metadatos del archivo y la implementación de un motor OCR (Reconocimiento Óptico de Caracteres) excede el alcance actual del proyecto (respetando el principio KISS).
+El backend monolitico se encuentra implementado con una arquitectura multicapa. Expone endpoints REST para documentos y un endpoint de salud. No incluye frontend, autenticacion, autorizacion, OCR ni generacion de resumenes.
 
-## ✨ Características
+La suite automatizada actual se ejecuta con `pytest` y cubre servicios, repositorio MongoDB simulado, endpoints de documentos y `GET /health`.
 
-- Extracción de texto de PDF en memoria.
-- Persistencia de datos asíncrona.
-- API REST rápida y moderna.
-- Control estricto de duplicados mediante Huella Digital (Checksum).
-- Desarrollo Guiado por Pruebas (TDD) con un 100% de cobertura.
-- Diseño basado estrictamente en **Arquitectura Limpia** (Clean Architecture).
-- Código limpio aplicando principios SOLID, DRY, KISS y YAGNI.
+## Arquitectura
 
-## 🛠️ Stack Tecnológico
+El proyecto usa una arquitectura multicapa con separacion entre presentacion, aplicacion e infraestructura:
 
-| Categoría | Tecnología |
-|----------|------------|
-| Lenguaje | Python 3.13+ |
-| Framework Web | FastAPI |
+- **Presentation**: define routers HTTP y esquemas Pydantic. Recibe requests, valida entradas basicas y devuelve respuestas JSON.
+- **Application**: contiene la logica de negocio y los contratos. `DocumentService` coordina la extraccion, validacion de duplicados y persistencia; `PDFService` extrae texto y calcula checksums.
+- **Infrastructure**: implementa persistencia en MongoDB mediante `motor`.
+- **Core**: centraliza configuracion y logging.
+- **Main**: ensambla la aplicacion FastAPI, crea servicios e inicializa/cierra el cliente MongoDB en el ciclo de vida de la app.
+
+## Tecnologias utilizadas
+
+| Area | Tecnologia |
+| --- | --- |
+| Lenguaje | Python `>=3.11` |
+| Runtime Docker | `python:3.12-slim-bookworm` |
+| Framework web | FastAPI |
+| Servidor ASGI | Uvicorn |
+| Validacion/configuracion | Pydantic, Pydantic Settings |
 | Procesamiento PDF | pypdf |
-| Base de Datos | MongoDB (Driver `motor`) |
-| Gestión de Entorno | UV |
-| Testing | Pytest, Pytest-asyncio, Mongomock-motor |
+| Base de datos | MongoDB |
+| Driver MongoDB | motor |
+| Gestion de dependencias | uv |
+| Testing | pytest, pytest-asyncio, mongomock-motor |
+| Contenedores | Docker, Docker Compose |
 
-### Dependencias Principales
-
-- **fastapi**: Framework web moderno, rápido y asíncrono.
-- **uvicorn**: Servidor ASGI para correr la aplicación.
-- **pypdf**: Procesamiento y extracción de texto de PDF.
-- **motor**: Driver asíncrono oficial de MongoDB.
-- **pytest / pytest-asyncio**: Framework de pruebas unitarias y de integración.
-- **mongomock-motor**: Simulador asíncrono de base de datos para testing aislado.
-
-## 📂 Estructura del Proyecto
+## Estructura del proyecto
 
 ```text
 pdf-extractext/
-├── app/
-│   ├── main.py                 
-│   ├── core/                   
-│   ├── application/            
-│   │   ├── interfaces/         
-│   │   └── services/           
-│   ├── infrastructure/         
-│   │   └── repositories/       
-│   │       └── mongo_repository.py
-│   └── presentation/           
-│       ├── routers/            
-│       └── schemas/            
-├── tests/                      
-│   ├── test_api.py
-│   ├── test_document_service.py
-│   ├── test_mongo_repository.py
-│   └── test_pdf_service.py
-├── pyproject.toml              
-└── README.md
+|-- app/
+|   |-- main.py
+|   |-- core/
+|   |   |-- config.py
+|   |   `-- logger.py
+|   |-- application/
+|   |   |-- interfaces/
+|   |   |   `-- document_repository.py
+|   |   `-- services/
+|   |       |-- document_service.py
+|   |       `-- pdf_service.py
+|   |-- infrastructure/
+|   |   `-- repositories/
+|   |       `-- mongo_repository.py
+|   `-- presentation/
+|       |-- routers/
+|       |   |-- document_router.py
+|       |   `-- health_router.py
+|       `-- schemas/
+|           `-- document_schema.py
+|-- tests/
+|   |-- test_api.py
+|   |-- test_document_service.py
+|   |-- test_health.py
+|   |-- test_mongo_repository.py
+|   `-- test_pdf_service.py
+|-- Dockerfile
+|-- docker-compose.yml
+|-- pyproject.toml
+|-- uv.lock
+`-- README.md
 ```
-### Descripción de Capas (Arquitectura Limpia)
 
-- Presentation (Presentación): Maneja las peticiones HTTP, valida los datos de entrada/salida usando Pydantic y enruta hacia los servicios.
-- Application (Aplicación/Dominio): Contiene la lógica de negocio pura. No sabe que existe FastAPI ni MongoDB. Define las reglas mediante DocumentService y PDFService.
-- Infrastructure (Infraestructura): Implementa los contratos definidos por la aplicación. Aquí reside la conexión real a MongoDB mediante el driver motor.
+## Funcionalidades implementadas
 
-### ⚙️ Requisitos y Configuración
+- Carga de PDFs mediante `multipart/form-data`.
+- Extraccion de texto nativo del PDF en memoria.
+- Rechazo de PDFs sin texto extraible.
+- Rechazo de PDFs protegidos con contrasena o danados.
+- Calculo de checksum SHA-256 sobre el texto extraido.
+- Deteccion de duplicados por checksum antes de guardar.
+- Persistencia asincrona de documentos en MongoDB.
+- Listado de documentos guardados.
+- Consulta de un documento por UUID.
+- Actualizacion manual del texto extraido.
+- Eliminacion de documentos.
+- Health check contra MongoDB.
 
-## Requisitos del Sistema
-- SO: Windows 11 / Linux / macOS.
-- Python: Versión 3.13 o superior.
-- MongoDB: Instancia activa en el puerto 27017 (Nativo o vía Docker).
-- Instalación Directa (con UV)
-- Instalar dependencias del proyecto:Bashuv sync
-  
-## Instalar herramientas de desarrollo:
-````
-Bash
-uv sync --extra dev
-````
+## Validaciones implementadas
 
-### 🚀 Ejecución
-## Iniciar el servidor de desarrollo:
-```
-Bash
-uv run uvicorn app.main:app --reload
-```
-La API estará disponible en http://localhost:8000. Al acceder, el sistema redirigirá automáticamente a la documentación interactiva:
-Swagger UI: http://localhost:8000/docs
+En `POST /api/documents`:
 
-### 📡 Uso de la API
-## Endpoints principales
+- el nombre del archivo debe terminar en `.pdf`, sin distinguir mayusculas/minusculas;
+- el archivo no puede estar vacio;
+- el tamano maximo por defecto es `10 MB`;
+- el contenido debe comenzar con la firma binaria `%PDF-`;
+- el PDF no debe estar protegido con contrasena;
+- el PDF debe tener texto nativo extraible;
+- el contenido extraido no puede duplicar el checksum de un documento existente.
 
-| Método | Endpoint                 | Acción                                                       |
-|--------|--------------------------|--------------------------------------------------------------|
-| POST   | `/docs/documents`        | Sube un PDF, extrae texto y lo guarda                       |
-| GET    | `/docs/documents/{id}`   | Recupera la información de un documento                     |
-| PUT    | `/docs/documents/{id}`   | Actualiza el texto extraído                                 |
-| DELETE | `/docs/documents/{id}`   | Elimina un registro del sistema                             |
+En rutas con `{doc_id}`, FastAPI valida que el identificador tenga formato UUID. Si el documento no existe, los endpoints correspondientes devuelven `404`.
 
-## Nota técnica
+## Endpoints disponibles
 
-El sistema utiliza checksum **SHA-256** sobre el texto extraído.  
-Si intentas subir un documento diferente pero que contiene exactamente el mismo texto que uno ya registrado, el sistema lo detectará como duplicado para optimizar el almacenamiento.
+| Metodo | Endpoint | Descripcion |
+| --- | --- | --- |
+| `GET` | `/health` | Verifica conectividad con MongoDB. |
+| `POST` | `/api/documents` | Sube un PDF, extrae texto y guarda el documento. |
+| `GET` | `/api/documents` | Lista documentos guardados. |
+| `GET` | `/api/documents/{doc_id}` | Obtiene un documento por UUID. |
+| `PUT` | `/api/documents/{doc_id}` | Actualiza el campo `full_text` de un documento. |
+| `DELETE` | `/api/documents/{doc_id}` | Elimina un documento por UUID. |
 
-### 🧪 Pruebas Automatizadas
-Se ha implementado una suite completa de pruebas que garantiza el funcionamiento de cada capa de forma aislada.
-Ejecutar todos los tests:
-```
-Bash
-uv run pytest
-```
-### 📡 Uso de la API (Interfaz Interactiva)
-Por decisiones arquitectónicas y estándares de la industria (KISS), el sistema no cuenta con un frontend tradicional en HTML (de momento), sino que utiliza Swagger UI.
+La documentacion interactiva de FastAPI esta disponible en:
 
-Flujo de operación básico:
-1. Ingrese a http://127.0.0.1:8000/docs desde su navegador
-2. Localice el método HTTP de interés (por ejemplo, el POST para crear un documento).
-3. Haga clic en el botón "Try it out".
-4. Adjunte un archivo PDF válido en el formulario.
-5. Presione el botón "Execute".
+- Swagger UI: `http://localhost:8000/docs`
+- OpenAPI JSON: `http://localhost:8000/openapi.json`
 
-## Formato de Respuesta Esperada (Ejemplo POST)
-Si el documento se procesa correctamente y no es un duplicado, el servidor devolverá un código HTTP 200 con la siguiente estructura:
-```
-JSON
+## Respuestas principales
+
+Un documento se devuelve con esta estructura:
+
+```json
 {
   "id": "123e4567-e89b-12d3-a456-426614174000",
   "original_filename": "documento.pdf",
-  "full_text": "Texto completo extraído del documento...",
-  "checksum": "a8b9c1d2e3f4g5...",
-  "created_at": "2026-04-29T15:30:00Z"
+  "full_text": "Texto completo extraido del documento...",
+  "checksum": "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824",
+  "created_at": "2026-04-29T15:30:00+00:00"
 }
 ```
 
-### 🧪 Pruebas (Testing)
-El proyecto cuenta con una suite de pruebas robusta que aísla la base de datos utilizando mongomock-motor y aplica simulación de objetos (Mocks) para garantizar la fiabilidad del código.
+`GET /health` devuelve:
 
-## Ejecutar toda la suite de pruebas:
+```json
+{
+  "status": "healthy"
+}
 ```
-Bash
+
+Si MongoDB no responde, devuelve HTTP `503`:
+
+```json
+{
+  "status": "unhealthy"
+}
+```
+
+## Variables de entorno
+
+La configuracion se carga desde variables de entorno y, en desarrollo local, tambien desde `.env`.
+
+| Variable | Requerida | Valor por defecto | Descripcion |
+| --- | --- | --- | --- |
+| `MONGO_URI` | No | `mongodb://localhost:27017` | URI de conexion a MongoDB. |
+| `MONGO_DB_NAME` | No | `pdf-extractext` | Nombre de la base de datos. |
+| `UPLOAD_DIR` | No | `uploads` | Directorio creado al iniciar la app. No se usa para almacenar PDFs procesados. |
+| `MAX_UPLOAD_SIZE_BYTES` | No | `10485760` | Tamano maximo permitido para uploads. |
+
+`SECRET_KEY` no es utilizada por el backend actual.
+
+## Ejecucion local
+
+Requisitos:
+
+- Python `>=3.11`;
+- uv;
+- MongoDB accesible desde la aplicacion.
+
+Instalar dependencias:
+
+```bash
+uv sync
+```
+
+Configurar `.env` si se quiere sobrescribir la configuracion por defecto:
+
+```env
+MONGO_URI=mongodb://localhost:27017
+MONGO_DB_NAME=pdf-extractext
+MAX_UPLOAD_SIZE_BYTES=10485760
+```
+
+Iniciar el servidor de desarrollo:
+
+```bash
+uv run uvicorn app.main:app --reload
+```
+
+La API queda disponible en `http://localhost:8000`.
+
+## Docker y MongoDB
+
+El proyecto incluye `Dockerfile` y `docker-compose.yml`.
+
+Docker Compose levanta:
+
+- `api`: backend FastAPI en el puerto `8000`;
+- `db`: MongoDB `7.0` en el puerto `27017`;
+- volumen persistente `mongo_data`.
+
+Ejecutar con Docker Compose:
+
+```bash
+docker compose up --build
+```
+
+En Docker Compose, la API usa:
+
+```env
+MONGO_URI=mongodb://db:27017
+MONGO_DB_NAME=pdf_db
+```
+
+## Tests
+
+Ejecutar toda la suite:
+
+```bash
 uv run pytest
 ```
 
-### 🧠 Metodología y Diseño
-## TDD (Test-Driven Development): 
-El proyecto sigue el ciclo Red-Green-Refactor:
-1. Red: Escribir pruebas que fallan inicialmente.
-2. Green: Implementar el código mínimo para pasar las pruebas.
-3. Refactor: Mejorar el código y la arquitectura manteniendo las pruebas en verde.
+Tambien puede ejecutarse en modo resumido:
 
-## Principios de Diseño Aplicados
+```bash
+uv run pytest -q
+```
 
-| Principio | Descripción en el Proyecto |
-|----------|----------------------------|
-| KISS     | Se mantuvo la simplicidad evitando integrar motores OCR pesados en la Etapa 1. |
-| DRY      | La lógica de extracción y cálculo de hashes está centralizada y no se repite. |
-| YAGNI    | No se añadieron validaciones binarias de bajo nivel que no fueron solicitadas en los requerimientos core. |
-| SOLID    | Uso intensivo de Single Responsibility y Dependency Inversion para desacoplar MongoDB de la lógica de negocio. |
+## Ejemplos basicos de uso
+
+Health check:
+
+```bash
+curl http://localhost:8000/health
+```
+
+Subir un PDF:
+
+```bash
+curl -X POST "http://localhost:8000/api/documents" \
+  -F "file=@documento.pdf;type=application/pdf"
+```
+
+Listar documentos:
+
+```bash
+curl http://localhost:8000/api/documents
+```
+
+Obtener un documento:
+
+```bash
+curl http://localhost:8000/api/documents/123e4567-e89b-12d3-a456-426614174000
+```
+
+Actualizar texto extraido:
+
+```bash
+curl -X PUT "http://localhost:8000/api/documents/123e4567-e89b-12d3-a456-426614174000" \
+  -H "Content-Type: application/json" \
+  -d "{\"new_text\":\"Texto actualizado\"}"
+```
+
+Eliminar un documento:
+
+```bash
+curl -X DELETE "http://localhost:8000/api/documents/123e4567-e89b-12d3-a456-426614174000"
+```
+
+## Limitaciones actuales
+
+- No hay OCR: los PDFs escaneados o basados solo en imagenes no son procesables.
+- No hay frontend propio: la interaccion manual puede hacerse desde Swagger UI.
+- No hay autenticacion ni autorizacion.
+- No hay endpoints de resumenes.
+- Los PDFs no se almacenan en disco; se procesa y persiste el texto extraido.
