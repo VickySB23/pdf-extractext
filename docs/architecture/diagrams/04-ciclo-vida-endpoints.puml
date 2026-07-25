@@ -1,0 +1,57 @@
+@startuml
+title Ciclo de vida de endpoints actuales
+
+skinparam shadowing false
+
+start
+:Request HTTP;
+
+if (Ruta?) then (POST /api/documents)
+  :Document Router;
+  :Validar extension, bytes,\ntamano y magic bytes;
+  :DocumentService.create_document;
+  :PDFService.extract_text;
+  :Repository.exists_by_checksum;
+  :Repository.save;
+  :MongoDB insert_one;
+  :200 DocumentResponse o error HTTP;
+elseif (GET /api/documents)
+  :Document Router;
+  :DocumentService.list_documents;
+  :Repository.get_all(limit=100);
+  :MongoDB find().limit(100);
+  :200 list[DocumentResponse];
+elseif (GET /api/documents/{doc_id})
+  :Document Router;
+  :FastAPI valida UUID;
+  :DocumentService.get_document;
+  :Repository.get_by_id;
+  :MongoDB find_one;
+  :200 DocumentResponse o 404;
+elseif (PUT /api/documents/{doc_id})
+  :Document Router;
+  :FastAPI valida UUID y body Pydantic;
+  :DocumentService.update_document;
+  :Repository.update;
+  :MongoDB find_one_and_update;
+  :200 DocumentResponse o 404;
+elseif (DELETE /api/documents/{doc_id})
+  :Document Router;
+  :FastAPI valida UUID;
+  :DocumentService.delete_document;
+  :Repository.delete;
+  :MongoDB delete_one;
+  :200 message o 404;
+else (GET /health)
+  :Health Router;
+  :mongo_client.admin.command("ping");
+  if (Mongo responde?) then (si)
+    :200 {"status": "healthy"};
+  else (no)
+    :503 {"status": "unhealthy"};
+  endif
+endif
+
+stop
+
+@enduml

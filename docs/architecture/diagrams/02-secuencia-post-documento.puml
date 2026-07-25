@@ -1,0 +1,97 @@
+@startuml
+title Secuencia detallada - POST /api/documents
+
+skinparam shadowing false
+autonumber
+
+actor Cliente
+participant "FastAPI" as FastAPI
+participant "Document Router\ncreate_document_endpoint" as Router
+participant "Settings\nget_settings()" as Settings
+participant "DocumentService" as DocumentService
+participant "PDFService" as PDFService
+participant "PdfReader\npypdf" as PdfReader
+participant "DocumentRepository\ncontract" as RepoContract
+participant "MongoDocumentRepository" as Repo
+database "MongoDB\ncollection: documents" as MongoDB
+
+Cliente -> FastAPI : POST /api/documents\nmultipart/form-data file
+FastAPI -> Router : route request
+Router -> Router : safe_filename = file.filename\nor "documento.pdf"
+
+alt filename no termina en .pdf
+  Router --> Cliente : 400 Solo se admiten archivos PDF
+else extension valida
+  Router -> Router : content = await file.read()
+
+  alt content vacio
+    Router --> Cliente : 400 El archivo esta vacio
+  else content presente
+    Router -> Settings : get_settings()
+    Settings --> Router : max_upload_size_bytes
+
+    alt len(content) > max_upload_size_bytes
+      Router --> Cliente : 413 Archivo excede tamano maximo
+    else tamano permitido
+      Router -> Router : content.startswith(b"%PDF-")
+
+      alt magic bytes invalidos
+        Router --> Cliente : 400 Contenido no corresponde a PDF valido
+      else magic bytes validos
+        Router -> DocumentService : create_document(content, safe_filename)
+        DocumentService -> PDFService : extract_text(content, filename)\nvia asyncio.to_thread
+        PDFService -> PDFService : io.BytesIO(file_content)
+        PDFService -> PdfReader : PdfReader(pdf_stream)
+        PdfReader --> PDFService : reader
+
+        alt reader.is_encrypted
+          PDFService --> DocumentService : ValueError PDF protegido
+          DocumentService --> Router : ValueError
+          Router --> Cliente : 400
+        else PDF no protegido
+          loop por cada pagina
+            PDFService -> PdfReader : page.extract_text()
+            PdfReader --> PDFService : text | None | ""
+            PDFService -> PDFService : agregar text si existe
+          end
+
+          PDFService -> PDFService : clean_text = "\\n".join(pages_text).strip()
+
+          alt clean_text vacio
+            PDFService --> DocumentService : ValueError sin texto extraible
+            DocumentService --> Router : ValueError
+            Router --> Cliente : 400
+          else texto extraido
+            PDFService -> PDFService : checksum = sha256(clean_text UTF-8)
+            PDFService --> DocumentService : ExtractedPDF(filename, text, checksum)
+
+            DocumentService -> RepoContract : exists_by_checksum(checksum)
+            RepoContract -> Repo : exists_by_checksum(checksum)
+            Repo -> MongoDB : count_documents({checksum}, limit=1)
+            MongoDB --> Repo : count
+            Repo --> DocumentService : bool
+
+            alt checksum duplicado
+              DocumentService --> Router : ValueError documento duplicado
+              Router --> Cliente : 400
+            else checksum nuevo
+              DocumentService -> DocumentService : crear DocumentRecord\nid=uuid4, created_at=None
+              DocumentService -> RepoContract : save(document)
+              RepoContract -> Repo : save(document)
+              Repo -> Repo : mapear a dict MongoDB\n_id=str(uuid), created_at=now UTC
+              Repo -> MongoDB : insert_one(doc_dict)
+              MongoDB --> Repo : insert result
+              Repo -> Repo : _map_to_record(doc_dict)
+              Repo --> DocumentService : DocumentRecord
+              DocumentService --> Router : DocumentRecord
+              Router --> FastAPI : DocumentResponse
+              FastAPI --> Cliente : 200 JSON documento
+            end
+          end
+        end
+      end
+    end
+  end
+end
+
+@enduml

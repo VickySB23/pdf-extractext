@@ -1,0 +1,26 @@
+@startuml
+title Flujo Health Check - GET /health
+
+skinparam shadowing false
+autonumber
+
+actor Cliente
+participant "FastAPI" as FastAPI
+participant "Health Router\nhealth_check" as Health
+participant "app.state.mongo_client" as Client
+database "MongoDB" as MongoDB
+
+Cliente -> FastAPI : GET /health
+FastAPI -> Health : route request
+Health -> Client : acceder desde request.app.state
+Health -> MongoDB : admin.command("ping")
+
+alt ping exitoso
+  MongoDB --> Health : {"ok": 1}
+  Health --> Cliente : 200 {"status": "healthy"}
+else excepcion
+  MongoDB --> Health : Exception
+  Health --> Cliente : 503 {"status": "unhealthy"}
+end
+
+@enduml

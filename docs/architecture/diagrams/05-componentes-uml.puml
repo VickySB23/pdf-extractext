@@ -1,0 +1,61 @@
+@startuml
+title Diagrama de Componentes UML
+
+skinparam componentStyle rectangle
+skinparam shadowing false
+
+package "core" {
+  component "Settings" as Settings
+  component "logger" as Logger
+}
+
+package "presentation" {
+  component "Document Router" as DocumentRouter
+  component "Health Router" as HealthRouter
+  component "Document Schemas\nDocumentResponse\nDocumentUpdateRequest" as Schemas
+}
+
+package "application" {
+  component "DocumentService" as DocumentService
+  component "PDFService" as PDFService
+  interface "DocumentRepository" as DocumentRepository
+  component "DocumentRecord" as DocumentRecord
+  component "ExtractedPDF" as ExtractedPDF
+}
+
+package "infrastructure" {
+  component "MongoDocumentRepository" as MongoRepository
+}
+
+component "FastAPI\napp/main.py" as FastAPI
+database "MongoDB" as MongoDB
+
+FastAPI --> Settings : lee configuracion
+FastAPI --> DocumentRouter : include_router
+FastAPI --> HealthRouter : include_router
+FastAPI --> DocumentService : crea e inyecta en app.state
+FastAPI --> PDFService : crea
+FastAPI --> MongoRepository : crea con db
+FastAPI --> MongoDB : AsyncIOMotorClient
+
+DocumentRouter --> Schemas : response_model / body
+DocumentRouter --> Settings : max_upload_size_bytes
+DocumentRouter --> DocumentService : Depends desde app.state
+
+HealthRouter --> FastAPI : request.app.state.mongo_client
+HealthRouter --> MongoDB : ping
+
+DocumentService --> PDFService : usa
+DocumentService --> DocumentRepository : depende del contrato
+DocumentService --> DocumentRecord : crea
+PDFService --> ExtractedPDF : devuelve
+
+MongoRepository ..|> DocumentRepository
+MongoRepository --> MongoDB : CRUD
+MongoRepository --> DocumentRecord : mapea
+
+DocumentService --> Logger
+PDFService --> Logger
+FastAPI --> Logger
+
+@enduml

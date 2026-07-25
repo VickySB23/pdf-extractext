@@ -1,0 +1,70 @@
+@startuml
+title Diagrama de Clases UML
+
+skinparam shadowing false
+
+class DocumentService {
+  - _pdf_service: PDFService
+  - _repository: DocumentRepository
+  + create_document(file_content: bytes, filename: str): DocumentRecord
+  + get_document(doc_id: UUID): DocumentRecord | None
+  + list_documents(limit: int = 100): list[DocumentRecord]
+  + update_document(doc_id: UUID, new_text: str): DocumentRecord | None
+  + delete_document(doc_id: UUID): bool
+}
+
+class PDFService {
+  + extract_text(file_content: bytes, filename: str): ExtractedPDF
+}
+
+interface DocumentRepository {
+  + save(document: DocumentRecord): DocumentRecord
+  + get_by_id(doc_id: UUID): DocumentRecord | None
+  + get_all(limit: int = 100): list[DocumentRecord]
+  + update(doc_id: UUID, new_text: str): DocumentRecord | None
+  + delete(doc_id: UUID): bool
+  + exists_by_checksum(checksum: str): bool
+}
+
+class MongoDocumentRepository {
+  - _collection
+  + save(document: DocumentRecord): DocumentRecord
+  + get_by_id(doc_id: UUID): DocumentRecord | None
+  + get_all(limit: int = 100): list[DocumentRecord]
+  + update(doc_id: UUID, new_text: str): DocumentRecord | None
+  + delete(doc_id: UUID): bool
+  + exists_by_checksum(checksum: str): bool
+  - _map_to_record(doc: dict): DocumentRecord
+}
+
+class DocumentRecord <<dataclass>> {
+  + id: UUID
+  + original_filename: str
+  + full_text: str
+  + checksum: str
+  + created_at: datetime | None
+}
+
+class ExtractedPDF <<dataclass>> {
+  + filename: str
+  + text: str
+  + checksum: str
+}
+
+class Settings {
+  + upload_dir: Path = Path("uploads")
+  + mongo_uri: str = "mongodb://localhost:27017"
+  + mongo_db_name: str = "pdf-extractext"
+  + max_upload_size_bytes: int = 10485760
+}
+
+DocumentService o-- PDFService
+DocumentService o-- DocumentRepository
+DocumentService ..> DocumentRecord : crea/devuelve
+DocumentService ..> ExtractedPDF : recibe
+PDFService ..> ExtractedPDF : crea/devuelve
+MongoDocumentRepository ..|> DocumentRepository
+MongoDocumentRepository ..> DocumentRecord : mapea/devuelve
+Settings ..> MongoDocumentRepository : configura conexion via main.py
+
+@enduml

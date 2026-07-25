@@ -1,0 +1,37 @@
+@startuml
+title Diagrama General del Sistema
+
+skinparam componentStyle rectangle
+skinparam shadowing false
+
+actor Cliente
+
+rectangle "Backend monolitico FastAPI" as Backend {
+  component "FastAPI app\napp/main.py" as FastAPI
+  component "Document Router\n/api/documents" as Router
+  component "Health Router\n/health" as Health
+  component "DocumentService" as DocumentService
+  component "PDFService" as PDFService
+  interface "DocumentRepository" as RepositoryContract
+  component "MongoDocumentRepository" as Repository
+}
+
+database "MongoDB\ncollection: documents" as MongoDB
+
+Cliente --> FastAPI : HTTP request
+FastAPI --> Router : endpoints documentos
+FastAPI --> Health : health check
+Router --> DocumentService : delega casos de uso
+DocumentService --> PDFService : extrae texto y checksum\nsolo en POST
+DocumentService --> RepositoryContract : usa contrato
+Repository ..|> RepositoryContract
+Repository --> MongoDB : CRUD documents
+Health --> MongoDB : ping admin.command("ping")
+
+note right of Backend
+Una sola aplicacion desplegable.
+La separacion es por capas internas,
+no por servicios distribuidos.
+end note
+
+@enduml

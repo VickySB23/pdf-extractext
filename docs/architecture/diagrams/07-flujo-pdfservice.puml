@@ -1,0 +1,69 @@
+@startuml
+title Flujo interno de validacion y PDFService
+
+skinparam shadowing false
+
+start
+:Router recibe UploadFile;
+:Resolver filename;
+
+if (filename termina en .pdf?) then (si)
+  :Leer bytes en memoria;
+else (no)
+  :HTTP 400;
+  stop
+endif
+
+if (bytes vacios?) then (si)
+  :HTTP 400;
+  stop
+else (no)
+endif
+
+:Leer MAX_UPLOAD_SIZE_BYTES;
+if (tamano excedido?) then (si)
+  :HTTP 413;
+  stop
+else (no)
+endif
+
+if (bytes empiezan con %PDF-?) then (si)
+  :DocumentService llama PDFService.extract_text\nvia asyncio.to_thread;
+else (no)
+  :HTTP 400;
+  stop
+endif
+
+:PDFService recibe bytes y filename;
+:Crear io.BytesIO(file_content);
+:Crear PdfReader(pdf_stream);
+
+if (PDF protegido?) then (si)
+  :ValueError PDF protegido;
+  stop
+else (no)
+endif
+
+:Inicializar pages_text = [];
+while (hay paginas?) is (si)
+  :page.extract_text();
+  if (text existe?) then (si)
+    :Agregar text a pages_text;
+  else (no)
+    :Ignorar None o string vacio;
+  endif
+endwhile (no)
+
+:clean_text = join con salto de linea y strip;
+
+if (clean_text vacio?) then (si)
+  :ValueError sin texto extraible;
+  stop
+else (no)
+endif
+
+:checksum = sha256(clean_text UTF-8);
+:Devolver ExtractedPDF(filename, text, checksum);
+stop
+
+@enduml

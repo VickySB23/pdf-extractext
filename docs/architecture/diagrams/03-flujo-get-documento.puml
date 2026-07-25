@@ -1,0 +1,49 @@
+@startuml
+title Flujo GET - documentos
+
+skinparam shadowing false
+
+actor Cliente
+participant "FastAPI" as FastAPI
+participant "Document Router" as Router
+participant "DocumentService" as Service
+participant "DocumentRepository\ncontract" as Contract
+participant "MongoDocumentRepository" as Repository
+database "MongoDB" as MongoDB
+
+== GET /api/documents/{doc_id} ==
+
+Cliente -> FastAPI : GET /api/documents/{doc_id}
+FastAPI -> Router : validar y convertir doc_id a UUID
+Router -> Service : get_document(doc_id)
+Service -> Contract : get_by_id(doc_id)
+Contract -> Repository : get_by_id(doc_id)
+Repository -> MongoDB : find_one({"_id": str(doc_id)})
+MongoDB --> Repository : document | null
+
+alt documento encontrado
+  Repository -> Repository : _map_to_record(document)
+  Repository --> Service : DocumentRecord
+  Service --> Router : DocumentRecord
+  Router --> Cliente : 200 DocumentResponse
+else documento inexistente
+  Repository --> Service : None
+  Service --> Router : None
+  Router --> Cliente : 404 Documento no encontrado
+end
+
+== GET /api/documents ==
+
+Cliente -> FastAPI : GET /api/documents
+FastAPI -> Router : route request
+Router -> Service : list_documents()
+Service -> Contract : get_all(limit=100)
+Contract -> Repository : get_all(limit=100)
+Repository -> MongoDB : find().limit(100)
+MongoDB --> Repository : documents
+Repository -> Repository : mapear cada document a DocumentRecord
+Repository --> Service : list[DocumentRecord]
+Service --> Router : list[DocumentRecord]
+Router --> Cliente : 200 list[DocumentResponse]
+
+@enduml
