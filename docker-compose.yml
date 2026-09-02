@@ -1,11 +1,25 @@
 services:
+  traefik:
+    image: traefik:v3.1
+    container_name: traefik
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+    ports:
+      - "80:80"       # tráfico normal (http)
+      - "8080:8080"   # dashboard de Traefik
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+    networks:
+      - traefik-net
+ 
   api:
     build:
       context: .
       dockerfile: Dockerfile
     container_name: pdf_extract_api
-    ports:
-      - "8000:8000"
     environment:
       - MONGO_URI=mongodb://db:27017
       - MONGO_DB_NAME=pdf_db
@@ -14,7 +28,13 @@ services:
     volumes:
       - ./app:/app/app
     command: uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
-
+    networks:
+      - traefik-net
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.api.rule=PathPrefix(`/api`)"
+      - "traefik.http.services.api.loadbalancer.server.port=8000"
+ 
   db:
     image: mongo:7.0
     container_name: pdf_extract_mongo
@@ -23,6 +43,13 @@ services:
     volumes:
       - mongo_data:/data/db
     restart: unless-stopped
-
+    networks:
+      - traefik-net
+ 
 volumes:
   mongo_data:
+ 
+networks:
+  traefik-net:
+    driver: bridge
+ 
