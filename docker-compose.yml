@@ -1,55 +1,87 @@
 services:
+  # ── API Gateway ─────────────────────────────────────────────
   traefik:
-    image: traefik:v3.1
+    image: traefik:v3.6
     container_name: traefik
     command:
-      - "--api.insecure=true"
+      - "--api.insecure=true"            # dashboard en :8080 (solo desarrollo)
       - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"
       - "--entrypoints.web.address=:80"
     ports:
-      - "80:80"       # tráfico normal (http)
+      - "80:80"       # tráfico HTTP hacia los servicios
       - "8080:8080"   # dashboard de Traefik
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
     networks:
       - traefik-net
- 
-  api:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: pdf_extract_api
+
+  # ── Microservicio de documentos (API pública + MongoDB) ─────
+  document-service:
+    build: ./services/document-service
+    container_name: document_service
     environment:
       - MONGO_URI=mongodb://db:27017
       - MONGO_DB_NAME=pdf_db
+      - EXTRACTION_URL=http://extraction-service:8001
     depends_on:
-      - db
+      db:
+        condition: service_started
+      extraction-service:
+        condition: service_healthy
     volumes:
-      - ./app:/app/app
+      - ./services/document-service/app:/app/app
     command: uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     networks:
-      - traefik-net
+      - traefik-net   # para que Traefik lo alcance
+      - backend       # para hablar con la db y el extraction-service
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.api.rule=PathPrefix(`/api`)"
-      - "traefik.http.services.api.loadbalancer.server.port=8000"
- 
+      - "traefik.docker.network=traefik-net"   # obligatorio: el servicio está en 2 redes
+      - "traefik.http.routers.documents.rule=PathPrefix(`/api/documents`) || Path(`/health`)"
+      - "traefik.http.routers.documents.entrypoints=web"
+      - "traefik.http.services.documents.loadbalancer.server.port=8000"
+
+  # ── Microservicio de extracción (interno, sin base de datos) ─
+  extraction-service:
+    build: ./services/extraction-service
+    container_name: extraction_service
+    volumes:
+      - ./services/extraction-service/app:/app/app
+    command: uv run uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/health')"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - backend       # NO está en traefik-net: los clientes no llegan directo
+    # Para exponerlo por el gateway (opcional), sumá traefik-net a networks y estos labels:
+    # labels:
+    #   - "traefik.enable=true"
+    #   - "traefik.docker.network=traefik-net"
+    #   - "traefik.http.routers.extract.rule=PathPrefix(`/api/extract`)"
+    #   - "traefik.http.routers.extract.middlewares=extract-strip"
+    #   - "traefik.http.middlewares.extract-strip.stripprefix.prefixes=/api"
+    #   - "traefik.http.services.extract.loadbalancer.server.port=8001"
+
+  # ── Base de datos (solo la ve document-service) ─────────────
   db:
     image: mongo:7.0
     container_name: pdf_extract_mongo
-    ports:
-      - "27017:27017"
     volumes:
       - mongo_data:/data/db
     restart: unless-stopped
     networks:
-      - traefik-net
- 
+      - backend
+    # Sin "ports": nadie desde afuera necesita entrar a Mongo.
+    # Si querés inspeccionarlo con Compass, agregá temporalmente:  ports: ["27017:27017"]
+
 volumes:
   mongo_data:
- 
+
 networks:
   traefik-net:
     driver: bridge
- 
+  backend:
+    driver: bridge
