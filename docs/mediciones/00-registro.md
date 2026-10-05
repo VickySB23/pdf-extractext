@@ -14,3 +14,19 @@
 - Hipótesis para el siguiente paso: la librería es el límite de capacidad
   (~0,5 req/s por núcleo); el backpressure evita el colapso pero no da
   capacidad.
+
+  
+## Exp. 2 - PyMuPDF, 1 réplica, sin backpressure (2026-10-05)
+- Cambio respecto al Exp. 1: solo la librería (pypdf -> PyMuPDF con candado por proceso).
+- Tiempo por PDF (curl, servicio descansado): 0,12 / 0,48 / 0,26 / 0,27 s
+  (antes 1,5 / 4,0 / 1,7 / 4,3 s).
+- k6 spike: 223 peticiones, 4,38 req/s, 13,5 % error (502), p50 18,1 s,
+  p95 32,2 s, máx 37,6 s.
+- Vegeta 50 req/s: 4,4 % éxito (66/1500), 1433 timeouts, p50 30 s.
+- Observaciones: capacidad de una réplica ~4,4 req/s. Memoria posterior a la
+  prueba: ~870 MiB (supera el límite de 512 MiB del TP): las peticiones en cola
+  retienen su PDF completo. Trabajo desperdiciado en peticiones de clientes que
+  ya hicieron timeout.
+- Pendiente de diagnosticar: 502 de Traefik (30 en k6).
+- Hipótesis siguiente: limitar la concurrencia ANTES de leer el cuerpo reduce la
+  memoria y evita procesar peticiones muertas.
