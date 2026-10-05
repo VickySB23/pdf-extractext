@@ -1,0 +1,35 @@
+name: pdf-bench
+
+services:
+  traefik:
+    image: traefik:v3.6
+    command:
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+    ports:
+      - "8080:80"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+    networks:
+      - traefik-net
+
+  extraction-service:
+    build: ./services/extraction-service
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 10s
+    networks:
+      - traefik-net
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.extract.rule=Path(`/extract`) || Path(`/health`)"
+      - "traefik.http.routers.extract.entrypoints=web"
+      - "traefik.http.services.extract.loadbalancer.server.port=8001"
+
+networks:
+  traefik-net:
+    driver: bridge
