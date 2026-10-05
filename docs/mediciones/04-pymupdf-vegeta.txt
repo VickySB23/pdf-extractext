@@ -1,0 +1,12 @@
+﻿Requests      [total, rate, throughput]         1500, 50.06, 1.10
+Duration      [total, attack, wait]             59.969s, 29.967s, 30.002s
+Latencies     [min, mean, 50, 90, 95, 99, max]  372.405ms, 29.38s, 30.007s, 30.014s, 30.015s, 30.016s, 30.042s
+Bytes In      [total, mean]                     3783046, 2522.03
+Bytes Out     [total, mean]                     81861979, 54574.65
+Success       [ratio]                           4.40%
+Status Codes  [code:count]                      0:1433  200:66  502:1  
+Error Set:
+unexpected EOF
+502 Bad Gateway
+context deadline exceeded (Client.Timeout or context cancellation while reading body)
+Post "http://localhost:8080/extract": context deadline exceeded (Client.Timeout exceeded while awaiting headers)
