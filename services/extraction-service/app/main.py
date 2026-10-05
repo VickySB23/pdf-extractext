@@ -107,7 +107,7 @@ async def extract(request: Request):
             )
 
     try:
-        # pypdf es CPU-bound
+        # PyMuPDF es CPU-bound
         result = await asyncio.to_thread(extract_text, data)
     except ExtractionError as exc:
         raise HTTPException(

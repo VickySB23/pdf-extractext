@@ -1,9 +1,8 @@
 """Lógica pura de extracción (sin FastAPI). Es el PDFService del monolito, aislado."""
-import io
+import threading
 from dataclasses import dataclass
 
-from pypdf import PdfReader
-from pypdf.errors import PdfReadError, PdfStreamError
+import pymupdf
 
 
 class ExtractionError(Exception):
@@ -24,24 +23,43 @@ class ExtractionResult:
     page_count: int
 
 
+# PyMuPDF no se puede usar desde varios hilos a la vez ("PyMuPDF does not support
+# running on multiple threads"), así que dentro del proceso las extracciones se
+# serializan. El paralelismo real se consigue con réplicas (procesos/contenedores),
+# no con hilos.
+_EXTRACTION_LOCK = threading.Lock()
+
+
 def extract_text(data: bytes) -> ExtractionResult:
     if not data.startswith(b"%PDF-"):
         raise InvalidPDFError("El contenido no parece un PDF (falta la firma %PDF-).")
 
-    try:
-        reader = PdfReader(io.BytesIO(data))
-    except (PdfReadError, PdfStreamError, ValueError) as exc:
-        raise InvalidPDFError("El PDF está dañado o no se pudo leer.") from exc
+    with _EXTRACTION_LOCK:
+        try:
+            doc = pymupdf.open(stream=data, filetype="pdf")
+        except (RuntimeError, ValueError) as exc:
+            # pymupdf.FileDataError y pymupdf.EmptyFileError heredan de RuntimeError
+            raise InvalidPDFError("El PDF está dañado o no se pudo leer.") from exc
 
-    if reader.is_encrypted:
-        raise EncryptedPDFError("El PDF está protegido con contraseña.")
+        try:
+            # needs_pass: hay que descifrarlo. is_encrypted: cifrado de cualquier tipo.
+            if doc.needs_pass or doc.is_encrypted:
+                raise EncryptedPDFError("El PDF está protegido con contraseña.")
 
-    try:
-        text = "\n".join((page.extract_text() or "") for page in reader.pages)
-    except (PdfReadError, PdfStreamError, ValueError) as exc:
-        raise InvalidPDFError("No se pudo extraer el texto del PDF.") from exc
+            page_count = doc.page_count
+            # MuPDF repara los PDFs truncados en vez de fallar: quedan con 0 páginas.
+            if page_count == 0:
+                raise InvalidPDFError("El PDF está dañado o no se pudo leer.")
 
-    # Un PDF válido sin texto extraíble devuelve content vacío (no error)
-    content = text.strip() if text else ""
+            try:
+                text = "\n".join(page.get_text() for page in doc)
+            except (RuntimeError, ValueError) as exc:
+                raise InvalidPDFError("No se pudo extraer el texto del PDF.") from exc
+        finally:
+            # Siempre cerrar: sin esto el documento nativo y su memoria se pierden.
+            doc.close()
 
-    return ExtractionResult(content=content, page_count=len(reader.pages))
+        # Un PDF válido sin texto extraíble devuelve content vacío (no error)
+        content = text.strip() if text else ""
+
+    return ExtractionResult(content=content, page_count=page_count)

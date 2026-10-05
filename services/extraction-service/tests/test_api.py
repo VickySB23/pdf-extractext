@@ -116,3 +116,24 @@ def test_extract_cifrado():
     r = client.post("/extract", files={"file": ("a.pdf", pdf_enc, "application/pdf")})
     assert r.status_code == 400
     assert r.json()["detail"]["code"] == "encrypted_pdf"
+
+
+# PDF dañado: MuPDF "repara" en vez de fallar, así que sin páginas no hay texto
+def test_extract_pdf_truncado():
+    # Cortar antes del árbol de páginas: conserva la cabecera %PDF- pero deja el PDF
+    # sin páginas. (Cortar más tarde no sirve: MuPDF recupera el PDF entero de los
+    # objetos que quedan y devuelve texto.)
+    pdf = build_pdf("hola")
+    truncado = pdf[: len(pdf) // 10]  # sólo cabecera + catálogo
+    assert truncado.startswith(b"%PDF-")
+    r = client.post("/extract", content=truncado, headers={"Content-Type": "application/pdf"})
+    assert r.status_code == 400
+    assert r.json()["detail"]["code"] == "invalid_pdf"
+
+
+def test_extract_pdf_sin_objetos():
+    """Cabecera válida pero sin objetos ni páginas: tampoco es un PDF utilizable."""
+    pdf = b"%PDF-1.4\n1 0 obj\n<< >>\nendobj\ntrailer\n<< >>\n%%EOF\n"
+    r = client.post("/extract", content=pdf, headers={"Content-Type": "application/pdf"})
+    assert r.status_code == 400
+    assert r.json()["detail"]["code"] == "invalid_pdf"
