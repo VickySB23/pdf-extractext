@@ -24,6 +24,7 @@ por réplica, reverse proxy (Traefik).
 - PyMuPDF es 12x-15x más rápido que pypdf (166 ms vs ~2100-2500 ms por PDF).
   Se migrará más adelante. Por ahora NO cambiar la librería de extracción.
 - Decisión pendiente: texto plano vs Markdown real.
+- Paso 2 HECHO: `/extract` acepta body crudo (cualquier Content-Type que no sea multipart, validado por firma %PDF-) y multipart; responde exactamente `{"content", "page_count"}`; PDF sin texto devuelve 200 con content vacío. Sigue usando pypdf. Tests: 15 en extraction-service, 21 en document-service.
 
 ### Reglas de trabajo
 
@@ -32,7 +33,7 @@ por réplica, reverse proxy (Traefik).
   y esperar confirmación.
 - Cada cambio debe tener un test o un comando de verificación.
 - Después de cada cambio, correr `uv run pytest -q` en el servicio y comprobar
-  que los tests existentes siguen pasando (6 en extraction-service).
+  que los tests existentes siguen pasando (15 en extraction-service).
 - Configuración por variables de entorno, logs a stdout (Twelve-Factor).
 - No inventar resultados: si algo no se pudo ejecutar, decirlo.
 
@@ -52,14 +53,14 @@ por réplica, reverse proxy (Traefik).
 Run uv commands **from inside the service directory** — there is no root project, and each service resolves its own `.venv`. A root `.venv` exists but uv ignores it (harmless `VIRTUAL_ENV ... does not match` warning).
 
 ```bash
-cd services/extraction-service   # 6 tests
+cd services/extraction-service   # 15 tests
 uv sync && uv run pytest -q
 
 cd services/document-service     # 21 tests
 uv sync && uv run pytest -q
 
 # single test / file (from a service dir)
-uv run pytest tests/test_http_text_extractor.py::test_extract_ok -q
+uv run pytest tests/test_api.py::test_extract_ok -q
 
 # local dev servers
 cd services/extraction-service && uv run uvicorn app.main:app --port 8001 --reload
@@ -76,12 +77,13 @@ There is **no linter, formatter or typechecker** configured (no ruff/mypy/editor
 
 ## Known gaps — verify before "fixing"
 
-These are real, verified breakages, not opinions. `docs/diagnostico/informe-diagnostico.md` lists them with evidence.
+These are real, verified breakages, not opinions. `docs/diagnostico/informe-diagnostico.md` lists them with evidence (written BEFORE step 2; some items below are updated).
 
 - **The two services never talk to each other.** `document-service/app/main.py` wires the *local* `PDFService` (pypdf in-process via `asyncio.to_thread`), while `HttpTextExtractor` + `CircuitBreaker` (`app/infrastructure/clients/`) are only exercised by tests. `EXTRACTION_URL` exists in compose but is **not declared in `app/core/config.py`** and never read.
-- **Two divergent extractors** exist: `document-service/app/application/services/pdf_service.py` raises bare `ValueError`; `extraction-service/app/pdf_service.py` raises typed errors (`invalid_pdf`/`encrypted_pdf`/`no_text`). Error semantics differ: internal `/extract` returns **422** for no-text, public `POST /api/documents` returns **400**.
+- **Two divergent extractors** existen: `document-service/app/application/services/pdf_service.py` lanza `ValueError` genérico; `extraction-service/app/pdf_service.py` lanza errores tipados (`invalid_pdf`/`encrypted_pdf`). Un PDF sin texto ya NO es error en extraction-service (200 con content vacío), mientras que `POST /api/documents` sigue devolviendo 400.
 - **The router's error contract is `ValueError`-only** (`document_router.py` wraps `except ValueError` -> 400). `DocumentService` does not even import the `TextExtractor` Protocol. Wiring the remote extractor requires changing both layers (or the domain exceptions become 500s).
-- **Public API ≠ TP contract.** Public surface is `POST /api/documents` -> `{id, original_filename, full_text, checksum, created_at}`. The required stateless contract is `{content: <markdown>, page_count: N}`; `/extract` returns `{text, checksum, pages}` and is not reachable through Traefik (route is only `PathPrefix(/api/documents) || Path(/health)`).
+- **Public API ≠ TP contract.** La API pública de document-service es `POST /api/documents` -> `{id, original_filename, full_text, checksum, created_at}`. `extraction-service` YA cumple el contrato del TP (`POST /extract` -> `{content, page_count}`), pero NO es alcanzable por Traefik (la ruta solo cubre `PathPrefix(/api/documents) || Path(/health)`).
+- `document-service/app/infrastructure/clients/http_text_extractor.py` (cliente no conectado al flujo real) sigue esperando el contrato viejo de extraction-service (`text/checksum/pages` y código `no_text`). No se arregla: está fuera del alcance del TP.
 - `pypdf` is ~13-15x slower than `pymupdf` on the committed stress PDFs (`docs/mediciones/01-extractores.txt`); `pymupdf` is deliberately not a dependency yet.
 - Stale deps in `document-service/pyproject.toml`: `tinydb`, `python-dotenv`, `SECRET_KEY` (unused), `pytest` in runtime deps.
 
@@ -91,8 +93,8 @@ These are real, verified breakages, not opinions. `docs/diagnostico/informe-diag
 - **Global state across test modules**: `tests/test_api.py` sets `dependency_overrides` and a shared `mock_service` at import time; `tests/test_health.py` overwrites `app.state.mongo_client`. Side effects on `side_effect`/`return_value` must be reset in the test itself. New modules can therefore leak into existing ones — prefer injecting fakes over mutating `app.state`.
 - `pytest-asyncio` runs in strict mode (no `asyncio_mode` config in `document-service`): every async test needs an explicit `@pytest.mark.asyncio`.
 - `document-service` has no `[tool.pytest.ini_options]`; `from app...` works because `tests/__init__.py` makes the tests a package and pytest prepends the service dir to `sys.path`. Keep that file.
-- `extraction-service` sets `pythonpath = ["."]` and `testpaths = ["tests"]`; its `tests/conftest.py::build_pdf` hand-builds a minimal PDF (no reportlab/fixtures dependency) — reuse it instead of adding PDF fixtures.
-- Test counts to sanity-check after changes: 6 in extraction-service, 21 in document-service.
+- `extraction-service` sets `pythonpath = ["."]` and `testpaths = ["tests"]`; its `tests/conftest.py::build_pdf` hand-builds a minimal PDF (no reportlab/fixtures dependency) — reuse it instead of adding PDF fixtures. `cryptography` is a dev-only dependency (used to build an encrypted PDF in a test); never add it to runtime dependencies.
+- Test counts to sanity-check after changes: 15 in extraction-service, 21 in document-service.
 
 ## Config / env gotchas
 
@@ -107,4 +109,4 @@ These are real, verified breakages, not opinions. `docs/diagnostico/informe-diag
 - Code, docstrings, user-facing error messages and `docs/` are in **Spanish**; keep it. Older docs are ASCII-only (no accents); newer code uses accents — match the file you are editing.
 - Layer rules from the original architecture doc still hold: routers do HTTP-only validation, `DocumentService` depends on the `DocumentRepository` Protocol (not Mongo), Mongo details stay in `infrastructure/repositories/mongo_repository.py`.
 - Commit messages are in Spanish, short imperative (`Separar monolito en document-service y extraction-service`).
-- Branch naming seen so far: `tp/baseline`.
+- Branch naming: `tp/baseline`, `tp/paso2-contrato` (one branch per TP step, `tp/pasoN-descripcion`).
