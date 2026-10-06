@@ -67,3 +67,19 @@
   cuerpo (hipótesis, no verificada).
 - Pendiente: con el límite real de 512 MiB una réplica podría morir por falta
   de memoria (pico 511-699 MiB sin límite). Verificar OOMKilled en el Exp. 5.
+
+  
+
+## Exp. 5 - 5 réplicas, 1 CPU y 512 MiB cada una, Traefik round robin (MAX_CONCURRENT=1, cola 20 s)
+- Verificado: 5 réplicas healthy, límite 512 MiB aplicado, reparto 8/8/8/8/8 en 40 peticiones.
+- k6 spike: 500 peticiones, 11,70 req/s, 0 % error, p50 6,91 s, p90 9,31 s,
+  p95 9,6 s, máx 10,68 s.
+- Vegeta 50 req/s: 7,67 % éxito (115/1500), 1113 x 503, 272 errores de conexión, p50 20,2 s.
+- OOMKilled=false y 0 reinicios en las 5 réplicas. RAM pico por réplica: 126-187 MiB.
+- Escalado: 11,7 req/s con 5 réplicas contra 4,44 con una (2,6x, no 5x).
+- CPU durante k6: las 5 réplicas entre 87 % y 102 % de uso medio, parejas.
+  El balanceo NO parece ser el cuello de botella.
+- Estimación: ~430 ms de CPU por petición bajo carga, contra ~190 ms de extracción
+  medida aislada en el host. Origen de la diferencia: sin determinar
+  (hipótesis: MuPDF más lento en el contenedor; hilos lógicos compartiendo núcleos
+  físicos; costo de la red de Docker Desktop en Windows).
