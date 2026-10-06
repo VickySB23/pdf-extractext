@@ -16,6 +16,16 @@ services:
 
   extraction-service:
     build: ./services/extraction-service
+    deploy:
+      replicas: 5
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+    environment:
+      MAX_CONCURRENT: "${MAX_CONCURRENT:-1}"
+      QUEUE_TIMEOUT_SECONDS: "${QUEUE_TIMEOUT_SECONDS:-20}"
+      RETRY_AFTER_SECONDS: "${RETRY_AFTER_SECONDS:-1}"
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/health')"]
       interval: 10s
