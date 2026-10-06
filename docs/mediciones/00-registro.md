@@ -108,3 +108,12 @@
   distinto (+/- 1-3 %). No se adopta ninguna: la librería ya no es una palanca.
 - Idea descartada sin consulta a la cátedra: caché por hash del contenido (el benchmark
   rota 4 PDFs; mediría el caché y no la extracción).
+
+  
+## Exp. 8 - Round robin vs p2c, k6 dentro de la red Docker, 3 corridas cada uno
+- Round robin: 19,95 y 19,87 req/s (corrida 1: completar desde 09-wrr-run1-k6.json).
+- p2c: 21,33 / 19,55 / 19,99 req/s (media 20,29).
+- 0 % de error en todas; p95 entre 5,16 y 6,60 s.
+- Variación entre corridas de una misma configuración: hasta ~9 %, mayor que la
+  diferencia entre configuraciones.
+- Conclusión: sin evidencia de mejora con p2c; se mantiene round robin (por defecto).

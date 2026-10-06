@@ -39,6 +39,7 @@ services:
       - "traefik.http.routers.extract.rule=Path(`/extract`) || Path(`/health`)"
       - "traefik.http.routers.extract.entrypoints=web"
       - "traefik.http.services.extract.loadbalancer.server.port=8001"
+      - "traefik.http.services.extract.loadbalancer.strategy=p2c"
 
 networks:
   traefik-net:
