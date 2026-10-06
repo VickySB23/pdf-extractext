@@ -133,3 +133,11 @@
   lo que rinden en k6 (CPU 53-77 % vs ~100 %).
 - Hipótesis (sin verificar): el lugar se ocupa mientras llega el cuerpo del PDF
   (semáforo adquirido antes de leer el cuerpo) y no se extrae durante ese tiempo.
+
+  
+## Exp. 10 - MAX_CONCURRENT=2, 5 réplicas, desde la red Docker (3 corridas k6 + 3 Vegeta)
+- k6: 19,81 / 20,16 / 21,12 req/s (media 20,36) frente a 20,30 con MAX_CONCURRENT=1.
+- Vegeta: 19,67 / 21,87 / 21,47 % de éxito (media 21,0) frente a 19,5 %.
+- Sin OOM en ninguna réplica.
+- Conclusión: la diferencia cae dentro de la variación entre corridas; la hipótesis del
+  semáforo (recibir el cuerpo mientras otro extrae) NO se confirma. Se mantiene 1.

@@ -1,0 +1,122 @@
+﻿08:37:43
+CONTAINER ID   NAME                             CPU %     MEM USAGE / LIMIT     MEM %     NET I/O           BLOCK I/O    PIDS
+b883c5c7d47e   pdf-bench-extraction-service-5   105.43%   109.7MiB / 512MiB     21.43%    36.6MB / 337kB    0B / 0B      9
+9d9c98b4acb8   pdf-bench-extraction-service-4   64.50%    76.08MiB / 512MiB     14.86%    13.9MB / 131kB    0B / 0B      9
+b08abceaf8d4   pdf-bench-extraction-service-3   104.47%   121.2MiB / 512MiB     23.67%    54.6MB / 330kB    0B / 0B      9
+d4eb4592fdfe   pdf-bench-extraction-service-1   105.35%   112MiB / 512MiB       21.87%    44.7MB / 429kB    0B / 0B      9
+a71dec4d9c5a   pdf-bench-extraction-service-2   103.48%   111.5MiB / 512MiB     21.78%    48.2MB / 352kB    0B / 0B      9
+ee937f7a8df1   pdf-bench-traefik-1              167.19%   312MiB / 9.402GiB     3.24%     25.3GB / 23.8GB   101MB / 0B   19
+53b8227f25c7   hardcore_newton                  240.50%   27.27MiB / 9.402GiB   0.28%     3.08MB / 286MB    0B / 0B      15
+08:37:49
+CONTAINER ID   NAME                             CPU %     MEM USAGE / LIMIT     MEM %     NET I/O           BLOCK I/O    PIDS
+53b8227f25c7   hardcore_newton                  146.14%   56.94MiB / 9.402GiB   0.59%     16.6MB / 1.09GB   0B / 0B      18
+b883c5c7d47e   pdf-bench-extraction-service-5   102.24%   195.5MiB / 512MiB     38.18%    165MB / 2.33MB    0B / 0B      9
+9d9c98b4acb8   pdf-bench-extraction-service-4   102.06%   201.5MiB / 512MiB     39.36%    152MB / 2.25MB    0B / 0B      10
+b08abceaf8d4   pdf-bench-extraction-service-3   98.77%    194.1MiB / 512MiB     37.91%    182MB / 2.42MB    0B / 0B      9
+d4eb4592fdfe   pdf-bench-extraction-service-1   99.69%    178.2MiB / 512MiB     34.80%    151MB / 2.43MB    0B / 0B      9
+a71dec4d9c5a   pdf-bench-extraction-service-2   102.04%   238.7MiB / 512MiB     46.62%    199MB / 2.41MB    0B / 0B      10
+ee937f7a8df1   pdf-bench-traefik-1              119.72%   491.1MiB / 9.402GiB   5.10%     26GB / 24.4GB     101MB / 0B   19
+08:37:55
+CONTAINER ID   NAME                             CPU %     MEM USAGE / LIMIT     MEM %     NET I/O           BLOCK I/O    PIDS
+53b8227f25c7   hardcore_newton                  115.32%   89.96MiB / 9.402GiB   0.93%     29.9MB / 1.45GB   0B / 0B      18
+b883c5c7d47e   pdf-bench-extraction-service-5   98.29%    201.4MiB / 512MiB     39.33%    231MB / 5.09MB    0B / 0B      10
+9d9c98b4acb8   pdf-bench-extraction-service-4   100.74%   207.8MiB / 512MiB     40.59%    197MB / 4.26MB    0B / 0B      10
+b08abceaf8d4   pdf-bench-extraction-service-3   102.77%   199.5MiB / 512MiB     38.96%    243MB / 5.12MB    0B / 0B      15
+d4eb4592fdfe   pdf-bench-extraction-service-1   102.42%   175.7MiB / 512MiB     34.32%    217MB / 5.19MB    0B / 0B      9
+a71dec4d9c5a   pdf-bench-extraction-service-2   98.04%    217MiB / 512MiB       42.38%    262MB / 5.27MB    0B / 0B      11
+ee937f7a8df1   pdf-bench-traefik-1              106.63%   587.6MiB / 9.402GiB   6.10%     26.5GB / 24.8GB   101MB / 0B   19
+08:38:01
+CONTAINER ID   NAME                             CPU %     MEM USAGE / LIMIT     MEM %     NET I/O           BLOCK I/O    PIDS
+53b8227f25c7   hardcore_newton                  105.40%   113.6MiB / 9.402GiB   1.18%     37.7MB / 1.71GB   0B / 0B      18
+b883c5c7d47e   pdf-bench-extraction-service-5   4.01%     210.2MiB / 512MiB     41.05%    261MB / 5.98MB    0B / 0B      10
+9d9c98b4acb8   pdf-bench-extraction-service-4   55.98%    215.4MiB / 512MiB     42.08%    248MB / 6.12MB    0B / 0B      10
+b08abceaf8d4   pdf-bench-extraction-service-3   1.75%     192.4MiB / 512MiB     37.57%    275MB / 6.64MB    0B / 0B      9
+d4eb4592fdfe   pdf-bench-extraction-service-1   1.41%     186.9MiB / 512MiB     36.51%    247MB / 6.36MB    0B / 0B      9
+a71dec4d9c5a   pdf-bench-extraction-service-2   1.46%     201.9MiB / 512MiB     39.44%    308MB / 6.92MB    0B / 0B      10
+ee937f7a8df1   pdf-bench-traefik-1              74.08%    697.1MiB / 9.402GiB   7.24%     26.8GB / 25GB     101MB / 0B   19
+08:38:06
+CONTAINER ID   NAME                             CPU %     MEM USAGE / LIMIT     MEM %     NET I/O           BLOCK I/O    PIDS
+53b8227f25c7   hardcore_newton                  100.13%   130.6MiB / 9.402GiB   1.36%     42.5MB / 1.93GB   0B / 0B      18
+b883c5c7d47e   pdf-bench-extraction-service-5   36.13%    215.1MiB / 512MiB     42.01%    285MB / 6.66MB    0B / 0B      10
+9d9c98b4acb8   pdf-bench-extraction-service-4   37.40%    227.9MiB / 512MiB     44.51%    269MB / 6.64MB    0B / 0B      10
+b08abceaf8d4   pdf-bench-extraction-service-3   1.21%     206.4MiB / 512MiB     40.31%    299MB / 7.05MB    0B / 0B      9
+d4eb4592fdfe   pdf-bench-extraction-service-1   32.17%    200MiB / 512MiB       39.06%    275MB / 6.97MB    0B / 0B      9
+a71dec4d9c5a   pdf-bench-extraction-service-2   39.01%    223.1MiB / 512MiB     43.57%    332MB / 7.62MB    0B / 0B      10
+ee937f7a8df1   pdf-bench-traefik-1              69.26%    807.5MiB / 9.402GiB   8.39%     27GB / 25.1GB     101MB / 0B   19
+08:38:12
+CONTAINER ID   NAME                             CPU %     MEM USAGE / LIMIT     MEM %     NET I/O           BLOCK I/O    PIDS
+53b8227f25c7   hardcore_newton                  66.77%    122.9MiB / 9.402GiB   1.28%     45MB / 2.08GB     0B / 0B      18
+b883c5c7d47e   pdf-bench-extraction-service-5   1.33%     192.3MiB / 512MiB     37.56%    304MB / 6.96MB    0B / 0B      10
+9d9c98b4acb8   pdf-bench-extraction-service-4   1.86%     206.9MiB / 512MiB     40.41%    285MB / 6.89MB    0B / 0B      10
+b08abceaf8d4   pdf-bench-extraction-service-3   1.41%     192.4MiB / 512MiB     37.58%    315MB / 7.3MB     0B / 0B      9
+d4eb4592fdfe   pdf-bench-extraction-service-1   1.59%     181.1MiB / 512MiB     35.37%    289MB / 7.18MB    0B / 0B      9
+a71dec4d9c5a   pdf-bench-extraction-service-2   1.80%     202.1MiB / 512MiB     39.47%    347MB / 7.85MB    0B / 0B      10
+ee937f7a8df1   pdf-bench-traefik-1              9.27%     794.5MiB / 9.402GiB   8.25%     27.1GB / 25.2GB   101MB / 0B   19
+08:38:18
+CONTAINER ID   NAME                             CPU %     MEM USAGE / LIMIT     MEM %     NET I/O           BLOCK I/O    PIDS
+53b8227f25c7   hardcore_newton                  4.18%     98.26MiB / 9.402GiB   1.02%     46.5MB / 2.1GB    0B / 0B      18
+b883c5c7d47e   pdf-bench-extraction-service-5   5.07%     170.5MiB / 512MiB     33.31%    323MB / 7.55MB    0B / 0B      10
+9d9c98b4acb8   pdf-bench-extraction-service-4   42.39%    187.9MiB / 512MiB     36.70%    305MB / 7.6MB     0B / 0B      10
+b08abceaf8d4   pdf-bench-extraction-service-3   4.08%     168.6MiB / 512MiB     32.93%    332MB / 7.92MB    0B / 0B      9
+d4eb4592fdfe   pdf-bench-extraction-service-1   5.39%     158.3MiB / 512MiB     30.93%    310MB / 7.83MB    0B / 0B      9
+a71dec4d9c5a   pdf-bench-extraction-service-2   5.58%     181.2MiB / 512MiB     35.39%    370MB / 8.51MB    0B / 0B      10
+ee937f7a8df1   pdf-bench-traefik-1              9.69%     650MiB / 9.402GiB     6.75%     27.2GB / 25.3GB   101MB / 0B   19
+08:38:24
+CONTAINER ID   NAME                             CPU %     MEM USAGE / LIMIT     MEM %     NET I/O           BLOCK I/O    PIDS
+53b8227f25c7   hardcore_newton                  97.89%    83.91MiB / 9.402GiB   0.87%     49.9MB / 2.43GB   0B / 0B      18
+b883c5c7d47e   pdf-bench-extraction-service-5   3.45%     202.7MiB / 512MiB     39.59%    396MB / 8.22MB    0B / 0B      10
+9d9c98b4acb8   pdf-bench-extraction-service-4   4.00%     198.6MiB / 512MiB     38.79%    363MB / 8.35MB    0B / 0B      10
+b08abceaf8d4   pdf-bench-extraction-service-3   3.84%     183.2MiB / 512MiB     35.77%    388MB / 8.58MB    0B / 0B      9
+d4eb4592fdfe   pdf-bench-extraction-service-1   4.88%     166.7MiB / 512MiB     32.56%    360MB / 8.4MB     0B / 0B      9
+a71dec4d9c5a   pdf-bench-extraction-service-2   3.67%     202MiB / 512MiB       39.45%    429MB / 9.06MB    0B / 0B      10
+ee937f7a8df1   pdf-bench-traefik-1              52.62%    648.9MiB / 9.402GiB   6.74%     27.4GB / 25.5GB   101MB / 0B   19
+08:38:30
+CONTAINER ID   NAME                             CPU %     MEM USAGE / LIMIT     MEM %     NET I/O           BLOCK I/O    PIDS
+53b8227f25c7   hardcore_newton                  40.95%    76.62MiB / 9.402GiB   0.80%     51.5MB / 2.65GB   0B / 0B      18
+b883c5c7d47e   pdf-bench-extraction-service-5   5.68%     173.6MiB / 512MiB     33.90%    453MB / 8.44MB    0B / 0B      10
+9d9c98b4acb8   pdf-bench-extraction-service-4   11.44%    170MiB / 512MiB       33.21%    437MB / 8.72MB    0B / 0B      10
+b08abceaf8d4   pdf-bench-extraction-service-3   27.81%    156.8MiB / 512MiB     30.63%    445MB / 8.87MB    0B / 0B      9
+d4eb4592fdfe   pdf-bench-extraction-service-1   5.38%     136.9MiB / 512MiB     26.75%    424MB / 8.89MB    0B / 0B      9
+a71dec4d9c5a   pdf-bench-extraction-service-2   8.42%     168.8MiB / 512MiB     32.98%    508MB / 9.38MB    0B / 0B      10
+ee937f7a8df1   pdf-bench-traefik-1              65.94%    480.6MiB / 9.402GiB   4.99%     27.7GB / 25.9GB   101MB / 0B   19
+08:38:36
+CONTAINER ID   NAME                             CPU %     MEM USAGE / LIMIT     MEM %     NET I/O           BLOCK I/O    PIDS
+53b8227f25c7   hardcore_newton                  1.29%     63.28MiB / 9.402GiB   0.66%     53.6MB / 2.7GB    0B / 0B      18
+b883c5c7d47e   pdf-bench-extraction-service-5   0.77%     139.8MiB / 512MiB     27.31%    500MB / 9.35MB    0B / 0B      10
+9d9c98b4acb8   pdf-bench-extraction-service-4   0.43%     154.3MiB / 512MiB     30.14%    479MB / 9.45MB    0B / 0B      10
+b08abceaf8d4   pdf-bench-extraction-service-3   0.33%     137.5MiB / 512MiB     26.86%    469MB / 9.53MB    0B / 0B      9
+d4eb4592fdfe   pdf-bench-extraction-service-1   1.23%     129MiB / 512MiB       25.20%    454MB / 9.07MB    0B / 0B      9
+a71dec4d9c5a   pdf-bench-extraction-service-2   0.83%     148.9MiB / 512MiB     29.09%    548MB / 9.71MB    0B / 0B      10
+ee937f7a8df1   pdf-bench-traefik-1              1.52%     352.8MiB / 9.402GiB   3.66%     27.8GB / 26.1GB   101MB / 0B   19
+08:38:41
+CONTAINER ID   NAME                             CPU %     MEM USAGE / LIMIT     MEM %     NET I/O           BLOCK I/O    PIDS
+b883c5c7d47e   pdf-bench-extraction-service-5   0.28%     139.8MiB / 512MiB     27.31%    500MB / 9.36MB    0B / 0B      10
+9d9c98b4acb8   pdf-bench-extraction-service-4   0.31%     154.3MiB / 512MiB     30.14%    479MB / 9.46MB    0B / 0B      10
+b08abceaf8d4   pdf-bench-extraction-service-3   0.27%     137.5MiB / 512MiB     26.86%    470MB / 9.55MB    0B / 0B      9
+d4eb4592fdfe   pdf-bench-extraction-service-1   0.33%     129MiB / 512MiB       25.20%    458MB / 9.17MB    0B / 0B      9
+a71dec4d9c5a   pdf-bench-extraction-service-2   0.29%     148.9MiB / 512MiB     29.09%    548MB / 9.72MB    0B / 0B      10
+ee937f7a8df1   pdf-bench-traefik-1              0.06%     346.5MiB / 9.402GiB   3.60%     27.8GB / 26.1GB   101MB / 0B   19
+08:38:47
+CONTAINER ID   NAME                             CPU %     MEM USAGE / LIMIT     MEM %     NET I/O           BLOCK I/O    PIDS
+b883c5c7d47e   pdf-bench-extraction-service-5   0.99%     139.8MiB / 512MiB     27.31%    500MB / 9.36MB    0B / 0B      10
+9d9c98b4acb8   pdf-bench-extraction-service-4   0.28%     154.3MiB / 512MiB     30.14%    479MB / 9.46MB    0B / 0B      10
+b08abceaf8d4   pdf-bench-extraction-service-3   0.25%     137.5MiB / 512MiB     26.86%    470MB / 9.55MB    0B / 0B      9
+d4eb4592fdfe   pdf-bench-extraction-service-1   0.23%     129MiB / 512MiB       25.20%    458MB / 9.18MB    0B / 0B      9
+a71dec4d9c5a   pdf-bench-extraction-service-2   1.04%     149.2MiB / 512MiB     29.14%    548MB / 9.72MB    0B / 0B      10
+ee937f7a8df1   pdf-bench-traefik-1              0.52%     346.3MiB / 9.402GiB   3.60%     27.8GB / 26.1GB   101MB / 0B   19
+08:38:53
+CONTAINER ID   NAME                             CPU %     MEM USAGE / LIMIT     MEM %     NET I/O           BLOCK I/O    PIDS
+b883c5c7d47e   pdf-bench-extraction-service-5   0.25%     139.8MiB / 512MiB     27.31%    500MB / 9.36MB    0B / 0B      10
+9d9c98b4acb8   pdf-bench-extraction-service-4   0.30%     154.3MiB / 512MiB     30.14%    479MB / 9.46MB    0B / 0B      10
+b08abceaf8d4   pdf-bench-extraction-service-3   0.24%     137.5MiB / 512MiB     26.86%    470MB / 9.55MB    0B / 0B      9
+d4eb4592fdfe   pdf-bench-extraction-service-1   0.28%     129MiB / 512MiB       25.20%    458MB / 9.18MB    0B / 0B      9
+a71dec4d9c5a   pdf-bench-extraction-service-2   0.28%     148.9MiB / 512MiB     29.09%    548MB / 9.72MB    0B / 0B      10
+ee937f7a8df1   pdf-bench-traefik-1              0.00%     346.3MiB / 9.402GiB   3.60%     27.8GB / 26.1GB   101MB / 0B   19
+08:38:59
+CONTAINER ID   NAME                             CPU %     MEM USAGE / LIMIT     MEM %     NET I/O           BLOCK I/O    PIDS
+b883c5c7d47e   pdf-bench-extraction-service-5   0.20%     139.8MiB / 512MiB     27.31%    500MB / 9.36MB    0B / 0B      10
+9d9c98b4acb8   pdf-bench-extraction-service-4   32.61%    154.3MiB / 512MiB     30.14%    479MB / 9.47MB    0B / 0B      10
+b08abceaf8d4   pdf-bench-extraction-service-3   32.00%    137.5MiB / 512MiB     26.86%    470MB / 9.56MB    0B / 0B      9
+d4eb4592fdfe   pdf-bench-extraction-service-1   31.60%    129.1MiB / 512MiB     25.21%    458MB / 9.18MB    0B / 0B      9
+a71dec4d9c5a   pdf-bench-extraction-service-2   0.21%     148.9MiB / 512MiB     29.09%    548MB / 9.72MB    0B / 0B      10
+ee937f7a8df1   pdf-bench-traefik-1              0.75%     346.3MiB / 9.402GiB   3.60%     27.8GB / 26.1GB   101MB / 0B   19
