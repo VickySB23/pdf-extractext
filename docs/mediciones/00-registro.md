@@ -45,3 +45,25 @@
 - Hipótesis: con un solo permiso, el cuerpo del PDF se recibe dentro del lugar
   mientras el procesador espera. Se prueba con MAX_CONCURRENT=2 (Exp. 4).
 - Traefik: sin logs; no aparecieron 502 en esta ronda.
+
+
+## Exp. 4 - Igual que Exp. 3 pero MAX_CONCURRENT=2 (2026-10-05)
+- Hipótesis a probar (del Exp. 3): con un solo permiso el cuerpo del PDF se
+  recibe dentro del lugar mientras el procesador espera; con 2 permisos se
+  solapan la recepción y la extracción.
+- Configuración efectiva (log de arranque): MAX_CONCURRENT=2,
+  QUEUE_TIMEOUT_SECONDS=20, RETRY_AFTER_SECONDS=1.
+- k6 spike: 255 peticiones, 4,49 req/s, 7,1 % error, espera p95 ~20,3 s.
+- Vegeta 50 req/s: 2,00 % éxito (30/1500), 1269 x 503, 201 errores de conexión
+  (EOF/timeout), p50 21,1 s.
+- Memoria del servicio: pico 698,7 MiB (Vegeta); ocioso quedó en ~270 MiB.
+- Resultado: la hipótesis NO se confirma. El throughput no cambia (~4,4 req/s,
+  limitado por CPU: ~100 % sostenido en k6) y la memoria sube. Se mantiene
+  MAX_CONCURRENT=1.
+- Notas: la mejora de errores en k6 (13 % -> 7 %) proviene de una sola corrida
+  por configuración; no se la considera concluyente (repetir 3 veces para los
+  números finales). Los ~200 errores EOF por corrida podrían deberse a que el
+  servidor responde 503 y cierra la conexión mientras el cliente aún envía el
+  cuerpo (hipótesis, no verificada).
+- Pendiente: con el límite real de 512 MiB una réplica podría morir por falta
+  de memoria (pico 511-699 MiB sin límite). Verificar OOMKilled en el Exp. 5.
