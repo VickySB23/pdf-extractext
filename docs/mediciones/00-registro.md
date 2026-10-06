@@ -117,3 +117,19 @@
 - Variación entre corridas de una misma configuración: hasta ~9 %, mayor que la
   diferencia entre configuraciones.
 - Conclusión: sin evidencia de mejora con p2c; se mantiene round robin (por defecto).
+
+
+## Exp. 8 (completo) - Round robin vs p2c, k6 dentro de la red Docker, 3 corridas cada uno
+- Round robin: 21,09 / 19,95 / 19,87 req/s (media 20,30).
+- p2c: 21,33 / 19,55 / 19,99 req/s (media 20,29).
+- Conclusión: sin diferencia; se mantiene round robin.
+
+## Exp. 9 - Vegeta dentro de la red Docker (5 réplicas, MAX_CONCURRENT=1), 3 corridas
+- Éxito: 18,73 % / 20,47 % / 19,40 % (281 / 307 / 291 respuestas 200 de 1500); 503: ~1200;
+  p50 ~20,03 s (el tope de espera en cola).
+- Desde Windows (Exp. 5) había dado 7,67 %: la red de Docker Desktop costaba mucho.
+- Estimación: con ~20 req/s medidos en k6 y ~40-50 s de trabajo disponible, serían
+  posibles ~800-1000 respuestas; se logran ~300. En Vegeta las réplicas rinden ~1/3 de
+  lo que rinden en k6 (CPU 53-77 % vs ~100 %).
+- Hipótesis (sin verificar): el lugar se ocupa mientras llega el cuerpo del PDF
+  (semáforo adquirido antes de leer el cuerpo) y no se extrae durante ese tiempo.
