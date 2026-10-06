@@ -1,0 +1,12 @@
+﻿Requests      [total, rate, throughput]         1500, 50.04, 0.50
+Duration      [total, attack, wait]             59.469s, 29.975s, 29.493s
+Latencies     [min, mean, 50, 90, 95, 99, max]  323.584ms, 22.444s, 21.089s, 30.002s, 30.006s, 30.014s, 30.017s
+Bytes In      [total, mean]                     2541282, 1694.19
+Bytes Out     [total, mean]                     3823794215, 2549196.14
+Success       [ratio]                           2.00%
+Status Codes  [code:count]                      0:201  200:30  503:1269  
+Error Set:
+unexpected EOF
+503 Service Unavailable
+Post "http://localhost:8080/extract": EOF
+Post "http://localhost:8080/extract": context deadline exceeded (Client.Timeout exceeded while awaiting headers)

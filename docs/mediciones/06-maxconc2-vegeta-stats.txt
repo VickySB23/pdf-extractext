@@ -1,0 +1,56 @@
+﻿21:03:03
+CONTAINER ID   NAME                             CPU %     MEM USAGE / LIMIT     MEM %     NET I/O         BLOCK I/O     PIDS
+518eacace335   pdf-bench-extraction-service-1   119.94%   211.5MiB / 9.402GiB   2.20%     145MB / 376kB   0B / 0B       9
+ee937f7a8df1   pdf-bench-traefik-1              109.00%   80.37MiB / 9.402GiB   0.83%     8GB / 7.14GB    99.3MB / 0B   33
+21:03:10
+CONTAINER ID   NAME                             CPU %     MEM USAGE / LIMIT     MEM %     NET I/O           BLOCK I/O     PIDS
+518eacace335   pdf-bench-extraction-service-1   121.55%   629.2MiB / 9.402GiB   6.54%     601MB / 3.05MB    0B / 0B       9
+ee937f7a8df1   pdf-bench-traefik-1              142.79%   295.4MiB / 9.402GiB   3.07%     8.77GB / 7.71GB   99.4MB / 0B   33
+21:03:18
+CONTAINER ID   NAME                             CPU %     MEM USAGE / LIMIT     MEM %     NET I/O          BLOCK I/O     PIDS
+518eacace335   pdf-bench-extraction-service-1   31.37%    698.7MiB / 9.402GiB   7.26%     711MB / 6.4MB    0B / 0B       9
+ee937f7a8df1   pdf-bench-traefik-1              60.41%    389.2MiB / 9.402GiB   4.04%     8.92GB / 7.8GB   99.4MB / 0B   33
+21:03:26
+CONTAINER ID   NAME                             CPU %     MEM USAGE / LIMIT     MEM %     NET I/O           BLOCK I/O     PIDS
+518eacace335   pdf-bench-extraction-service-1   136.24%   489.2MiB / 9.402GiB   5.08%     934MB / 11.9MB    0B / 0B       10
+ee937f7a8df1   pdf-bench-traefik-1              89.00%    452.7MiB / 9.402GiB   4.70%     9.21GB / 8.04GB   99.4MB / 0B   33
+21:03:34
+CONTAINER ID   NAME                             CPU %     MEM USAGE / LIMIT     MEM %     NET I/O           BLOCK I/O     PIDS
+518eacace335   pdf-bench-extraction-service-1   6.25%     426.2MiB / 9.402GiB   4.43%     1.09GB / 15.5MB   0B / 0B       9
+ee937f7a8df1   pdf-bench-traefik-1              12.16%    422.3MiB / 9.402GiB   4.39%     9.36GB / 8.19GB   99.4MB / 0B   33
+21:03:41
+CONTAINER ID   NAME                             CPU %     MEM USAGE / LIMIT     MEM %     NET I/O           BLOCK I/O     PIDS
+518eacace335   pdf-bench-extraction-service-1   19.16%    447.9MiB / 9.402GiB   4.65%     1.34GB / 19.7MB   0B / 0B       9
+ee937f7a8df1   pdf-bench-traefik-1              33.61%    350.5MiB / 9.402GiB   3.64%     9.63GB / 8.44GB   99.4MB / 0B   33
+21:03:49
+CONTAINER ID   NAME                             CPU %     MEM USAGE / LIMIT     MEM %     NET I/O           BLOCK I/O     PIDS
+518eacace335   pdf-bench-extraction-service-1   11.12%    484.6MiB / 9.402GiB   5.03%     1.63GB / 22MB     0B / 0B       9
+ee937f7a8df1   pdf-bench-traefik-1              83.31%    289.9MiB / 9.402GiB   3.01%     10.1GB / 8.81GB   99.4MB / 0B   33
+21:03:56
+CONTAINER ID   NAME                             CPU %     MEM USAGE / LIMIT     MEM %     NET I/O           BLOCK I/O     PIDS
+518eacace335   pdf-bench-extraction-service-1   1.51%     326MiB / 9.402GiB     3.39%     1.82GB / 22.7MB   0B / 0B       9
+ee937f7a8df1   pdf-bench-traefik-1              1.14%     185.8MiB / 9.402GiB   1.93%     10.2GB / 8.93GB   99.4MB / 0B   33
+21:04:04
+CONTAINER ID   NAME                             CPU %     MEM USAGE / LIMIT     MEM %     NET I/O           BLOCK I/O     PIDS
+518eacace335   pdf-bench-extraction-service-1   0.28%     269.5MiB / 9.402GiB   2.80%     1.84GB / 22.7MB   0B / 0B       9
+ee937f7a8df1   pdf-bench-traefik-1              0.00%     169.8MiB / 9.402GiB   1.76%     10.2GB / 8.95GB   99.4MB / 0B   33
+21:04:11
+CONTAINER ID   NAME                             CPU %     MEM USAGE / LIMIT     MEM %     NET I/O           BLOCK I/O     PIDS
+518eacace335   pdf-bench-extraction-service-1   29.92%    269.9MiB / 9.402GiB   2.80%     1.84GB / 22.7MB   0B / 0B       9
+ee937f7a8df1   pdf-bench-traefik-1              0.00%     169.6MiB / 9.402GiB   1.76%     10.2GB / 8.95GB   99.4MB / 0B   33
+21:04:19
+CONTAINER ID   NAME                             CPU %     MEM USAGE / LIMIT     MEM %     NET I/O           BLOCK I/O     PIDS
+518eacace335   pdf-bench-extraction-service-1   0.23%     269.5MiB / 9.402GiB   2.80%     1.84GB / 22.7MB   0B / 0B       9
+ee937f7a8df1   pdf-bench-traefik-1              0.00%     169.6MiB / 9.402GiB   1.76%     10.2GB / 8.95GB   99.4MB / 0B   33
+21:04:27
+CONTAINER ID   NAME                             CPU %     MEM USAGE / LIMIT     MEM %     NET I/O           BLOCK I/O     PIDS
+518eacace335   pdf-bench-extraction-service-1   0.21%     269.5MiB / 9.402GiB   2.80%     1.84GB / 22.7MB   0B / 0B       9
+ee937f7a8df1   pdf-bench-traefik-1              0.00%     169.6MiB / 9.402GiB   1.76%     10.2GB / 8.95GB   99.4MB / 0B   33
+21:04:34
+CONTAINER ID   NAME                             CPU %     MEM USAGE / LIMIT     MEM %     NET I/O           BLOCK I/O     PIDS
+518eacace335   pdf-bench-extraction-service-1   0.22%     269.5MiB / 9.402GiB   2.80%     1.84GB / 22.7MB   0B / 0B       9
+ee937f7a8df1   pdf-bench-traefik-1              0.00%     169.6MiB / 9.402GiB   1.76%     10.2GB / 8.95GB   99.4MB / 0B   33
+21:04:40
+CONTAINER ID   NAME                             CPU %     MEM USAGE / LIMIT     MEM %     NET I/O           BLOCK I/O     PIDS
+518eacace335   pdf-bench-extraction-service-1   0.21%     269.5MiB / 9.402GiB   2.80%     1.84GB / 22.8MB   0B / 0B       9
+ee937f7a8df1   pdf-bench-traefik-1              0.00%     169.6MiB / 9.402GiB   1.76%     10.2GB / 8.95GB   99.4MB / 0B   33

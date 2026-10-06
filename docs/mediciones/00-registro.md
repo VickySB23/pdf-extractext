@@ -30,3 +30,18 @@
 - Pendiente de diagnosticar: 502 de Traefik (30 en k6).
 - Hipótesis siguiente: limitar la concurrencia ANTES de leer el cuerpo reduce la
   memoria y evita procesar peticiones muertas.
+
+  
+## Exp. 3 - PyMuPDF + backpressure, 1 réplica (MAX_CONCURRENT=1, cola 20 s)
+- Cambio respecto al Exp. 2: semáforo adquirido antes de leer el cuerpo; 503 con
+  Retry-After si la espera supera 20 s.
+- k6 spike: 249 peticiones, 4,44 req/s, 13,3 % error (todo 503), p95 20,2 s,
+  máx 20,75 s.
+- Vegeta 50 req/s: 2,93 % éxito (44/1500), 1259 x 503, 197 con error de conexión
+  (EOF/timeout), p50 20,5 s.
+- Memoria del servicio: pico 352 MiB (k6) y 511,6 MiB (Vegeta). Antes ~870 MiB.
+- Observación: durante el ataque de Vegeta el CPU del servicio cayó a 19-33 % en
+  3 de 5 muestras con cientos de peticiones esperando (servicio ocioso).
+- Hipótesis: con un solo permiso, el cuerpo del PDF se recibe dentro del lugar
+  mientras el procesador espera. Se prueba con MAX_CONCURRENT=2 (Exp. 4).
+- Traefik: sin logs; no aparecieron 502 en esta ronda.
