@@ -98,3 +98,13 @@
   ~216 ms son extracción (~88 %). Techo teórico con 5 réplicas: ~23 req/s; medido 20,3.
 - Conclusión: el cuello de botella restante es el costo de la extracción por PDF.
 - Nota: la ruta del archivo de pruebas de la cátedra sugiere medición en Linux (inferencia).
+
+
+## Exp. 7 - Variantes de extracción (host Windows, 5 repeticiones por PDF)
+- PyMuPDF actual: media 217 ms. PyMuPDF flags=0: 190 ms (-12 %). pdfium: 203 ms (-6 %).
+- La misma función midió 166 ms en la primera corrida y 217 ms en esta: variación de
+  ~30 % entre corridas sin cambios -> las diferencias de 6-12 % no son concluyentes.
+- flags=0 extrae menos texto (-74 / -115 caracteres en 2 PDFs); pdfium extrae texto
+  distinto (+/- 1-3 %). No se adopta ninguna: la librería ya no es una palanca.
+- Idea descartada sin consulta a la cátedra: caché por hash del contenido (el benchmark
+  rota 4 PDFs; mediría el caché y no la extracción).
