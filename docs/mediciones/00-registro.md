@@ -83,3 +83,18 @@
   medida aislada en el host. Origen de la diferencia: sin determinar
   (hipótesis: MuPDF más lento en el contenedor; hilos lógicos compartiendo núcleos
   físicos; costo de la red de Docker Desktop en Windows).
+
+  
+## Exp. 6 - Diagnóstico de dónde se pierde la capacidad (5 réplicas)
+- PC de desarrollo: 6 núcleos físicos / 12 lógicos.
+- Extracción dentro del contenedor (5 repeticiones tras calentar): 78 / 385 / 201 / 202 ms,
+  media 216 ms. En el host Windows: 75 / 253 / 175 / 160 ms, media 166 ms (~30 % más lenta
+  en el contenedor).
+- k6 ejecutado DENTRO de la red de Docker (BASE_URL=http://traefik, sin la capa de red de
+  Docker Desktop): 835 peticiones, 20,30 req/s, 0 % error, p50 4,15 s, p90 5,43 s,
+  p95 5,74 s, máx 6,32 s. Con k6 desde el host fueron 11,70 req/s.
+- La diferencia (+73 %) se atribuye a la red de Docker Desktop en Windows.
+- Costo de CPU por petición dentro de la red: 5 CPU / 20,3 req/s ~ 246 ms, de los cuales
+  ~216 ms son extracción (~88 %). Techo teórico con 5 réplicas: ~23 req/s; medido 20,3.
+- Conclusión: el cuello de botella restante es el costo de la extracción por PDF.
+- Nota: la ruta del archivo de pruebas de la cátedra sugiere medición en Linux (inferencia).
