@@ -43,8 +43,10 @@ class ExtractorFalso:
         self.entró = threading.Event()
         self.salir = threading.Event()
 
-    def __call__(self, data: bytes) -> ExtractionResult:
-        real = _extract_real(data)  # el _EXTRACTION_LOCK se libera acá
+    def __call__(self, data: bytes, output_format: str = "markdown") -> ExtractionResult:
+        # El handler ahora pasa OUTPUT_FORMAT como 2° argumento; se reenvía al
+        # extractor real con el mismo default que el servicio.
+        real = _extract_real(data, output_format)  # el _EXTRACTION_LOCK se libera acá
         self.orden.append(real.content)
         self.entró.set()
         if self.bloquear:

@@ -10,8 +10,10 @@ VARIABLES = (
     "QUEUE_TIMEOUT_SECONDS",
     "RETRY_AFTER_SECONDS",
     "MAX_UPLOAD_SIZE_BYTES",
+    "OUTPUT_FORMAT",
 )
 INVALIDAS = ["cero", "0", "-1", "1.5", "", "  ", "10 MB"]
+INVALIDAS_ELECCION = ["html", "texto", "Markdown, text", "", "  "]
 
 
 @pytest.fixture
@@ -51,9 +53,35 @@ def test_max_concurrent_invalido_falla_al_arrancar(monkeypatch, restaurar_main):
         importlib.reload(main)
 
 
+@pytest.mark.parametrize("valor", INVALIDAS_ELECCION)
+def test_read_choice_rechaza_valores_invalidos(monkeypatch, valor):
+    monkeypatch.setenv("OUTPUT_FORMAT", valor)
+    with pytest.raises(RuntimeError, match="OUTPUT_FORMAT"):
+        main._read_choice("OUTPUT_FORMAT", "markdown", ("markdown", "text"))
+
+
+def test_read_choice_usa_el_default_si_no_esta_definida(monkeypatch):
+    monkeypatch.delenv("OUTPUT_FORMAT", raising=False)
+    assert main._read_choice("OUTPUT_FORMAT", "markdown", ("markdown", "text")) == "markdown"
+
+
+def test_read_choice_ignora_mayusculas_y_espacios(monkeypatch):
+    monkeypatch.setenv("OUTPUT_FORMAT", "  TEXT ")
+    assert main._read_choice("OUTPUT_FORMAT", "markdown", ("markdown", "text")) == "text"
+
+
+def test_output_format_invalido_falla_al_arrancar(monkeypatch, restaurar_main):
+    """Un OUTPUT_FORMAT inválido detiene el arranque, igual que las otras vars."""
+    monkeypatch.setenv("OUTPUT_FORMAT", "html")
+    with pytest.raises(RuntimeError, match="OUTPUT_FORMAT"):
+        importlib.reload(main)
+
+
 def test_el_arranque_anuncia_la_configuracion_por_stdout(monkeypatch, restaurar_main, capsys):
     monkeypatch.setenv("MAX_CONCURRENT", "7")
+    monkeypatch.setenv("OUTPUT_FORMAT", "text")
     importlib.reload(main)
     salida = capsys.readouterr().out
     assert "MAX_CONCURRENT=7" in salida
     assert "QUEUE_TIMEOUT_SECONDS=20" in salida
+    assert "OUTPUT_FORMAT=text" in salida

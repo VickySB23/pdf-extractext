@@ -4,6 +4,8 @@ from dataclasses import dataclass
 
 import pymupdf
 
+from app.markdown_service import a_markdown
+
 
 class ExtractionError(Exception):
     code = "extraction_error"
@@ -30,9 +32,20 @@ class ExtractionResult:
 _EXTRACTION_LOCK = threading.Lock()
 
 
-def extract_text(data: bytes) -> ExtractionResult:
+def extract_text(data: bytes, output_format: str = "markdown") -> ExtractionResult:
+    """Extrae el texto de un PDF.
+
+    output_format: "markdown" (default, Markdown básico) o "text" (plano,
+    idéntico al comportamiento histórico). Un valor desconocido lanza
+    ValueError: es un error de configuración, no un PDF inválido (main valida
+    OUTPUT_FORMAT al arrancar, así que por HTTP es inalcanzable).
+    """
     if not data.startswith(b"%PDF-"):
         raise InvalidPDFError("El contenido no parece un PDF (falta la firma %PDF-).")
+    # Validación estricta ANTES del lock y fuera del try que traduce
+    # (RuntimeError, ValueError) -> InvalidPDFError.
+    if output_format not in ("markdown", "text"):
+        raise ValueError(f"Formato de salida desconocido: {output_format!r}")
 
     with _EXTRACTION_LOCK:
         try:
@@ -52,7 +65,10 @@ def extract_text(data: bytes) -> ExtractionResult:
                 raise InvalidPDFError("El PDF está dañado o no se pudo leer.")
 
             try:
-                text = "\n".join(page.get_text() for page in doc)
+                if output_format == "text":
+                    text = "\n".join(page.get_text() for page in doc)
+                else:
+                    text = a_markdown(doc)
             except (RuntimeError, ValueError) as exc:
                 raise InvalidPDFError("No se pudo extraer el texto del PDF.") from exc
         finally:

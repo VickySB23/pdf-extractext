@@ -33,6 +33,25 @@ def _read_positive_int(name: str, default: int) -> int:
     return value
 
 
+def _read_choice(name: str, default: str, opciones: tuple[str, ...]) -> str:
+    """Lee una variable de entorno acotada a un conjunto de valores.
+
+    Sin definir -> default. Definida pero inválida -> RuntimeError al arrancar
+    (importar este módulo ES arrancar el servicio), con el nombre y las opciones
+    esperadas en el mensaje. Se compara en minúsculas y sin espacios borde.
+    """
+    raw = os.getenv(name)
+    if raw is None:
+        return default
+    valor = raw.strip().lower()
+    if valor not in opciones:
+        raise RuntimeError(
+            f"Variable de entorno inválida: {name}={raw!r} "
+            f"(se espera uno de: {', '.join(opciones)})."
+        )
+    return valor
+
+
 MAX_UPLOAD_SIZE_BYTES = _read_positive_int("MAX_UPLOAD_SIZE_BYTES", 10 * 1024 * 1024)
 
 # Backpressure: cuántos PDF pueden estar "en vuelo" (descargados + extrayéndose)
@@ -46,6 +65,9 @@ MAX_CONCURRENT = _read_positive_int("MAX_CONCURRENT", 1)
 QUEUE_TIMEOUT_SECONDS = _read_positive_int("QUEUE_TIMEOUT_SECONDS", 20)
 RETRY_AFTER_SECONDS = _read_positive_int("RETRY_AFTER_SECONDS", 1)
 
+# Formato de "content": Markdown básico (default) o texto plano.
+OUTPUT_FORMAT = _read_choice("OUTPUT_FORMAT", "markdown", ("markdown", "text"))
+
 # Twelve-Factor: se anuncia la configuración efectiva por stdout al arrancar.
 # NO usar logging.getLogger(...).info() acá: el dictConfig de uvicorn no
 # configura el logger root, así que un INFO de un logger nuevo se pierde.
@@ -54,7 +76,8 @@ print(
     f" MAX_CONCURRENT={MAX_CONCURRENT}"
     f" QUEUE_TIMEOUT_SECONDS={QUEUE_TIMEOUT_SECONDS}"
     f" MAX_UPLOAD_SIZE_BYTES={MAX_UPLOAD_SIZE_BYTES}"
-    f" RETRY_AFTER_SECONDS={RETRY_AFTER_SECONDS}",
+    f" RETRY_AFTER_SECONDS={RETRY_AFTER_SECONDS}"
+    f" OUTPUT_FORMAT={OUTPUT_FORMAT}",
     flush=True,
 )
 
@@ -201,7 +224,7 @@ async def extract(request: Request):
 
         try:
             # PyMuPDF es CPU-bound
-            result = await asyncio.to_thread(extract_text, data)
+            result = await asyncio.to_thread(extract_text, data, OUTPUT_FORMAT)
         except ExtractionError as exc:
             raise HTTPException(
                 _STATUS.get(type(exc), 400), {"code": exc.code, "message": str(exc)}
