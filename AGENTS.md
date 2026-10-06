@@ -26,6 +26,7 @@ por réplica, reverse proxy (Traefik).
   dependencia de DESARROLLO (los tests lo usan para armar el PDF cifrado).
 - Decisión pendiente: texto plano vs Markdown real.
 - Paso 2 HECHO: `/extract` acepta body crudo (cualquier Content-Type que no sea multipart, validado por firma %PDF-) y multipart; responde exactamente `{"content", "page_count"}`; PDF sin texto devuelve 200 con content vacío. Tests: 17 en extraction-service, 21 en document-service.
+- Markdown HECHO: `content` es Markdown básico (títulos por tamaño de fuente, viñetas, párrafos) por defecto; `OUTPUT_FORMAT=text` devuelve texto plano. Costo medido: ~1,4x el texto plano (240 ms vs 172 ms). Se descartó pymupdf4llm por costo (3,7 s vs 23 ms en un PDF de 16 páginas). Tests: 57 en extraction-service.
 
 ### Reglas de trabajo
 
@@ -34,7 +35,7 @@ por réplica, reverse proxy (Traefik).
   y esperar confirmación.
 - Cada cambio debe tener un test o un comando de verificación.
 - Después de cada cambio, correr `uv run pytest -q` en el servicio y comprobar
-  que los tests existentes siguen pasando (17 en extraction-service).
+  que los tests existentes siguen pasando (57 en extraction-service).
 - Configuración por variables de entorno, logs a stdout (Twelve-Factor).
 - No inventar resultados: si algo no se pudo ejecutar, decirlo.
 
