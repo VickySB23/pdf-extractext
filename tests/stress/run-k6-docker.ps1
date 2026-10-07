@@ -1,4 +1,4 @@
-# Uso: .\tests\stress\run-k6-docker.ps1 -Label 09-wrr -Runs 3
+﻿# Uso: .\tests\stress\run-k6-docker.ps1 -Label 09-wrr -Runs 3
 param([string]$Label = "k6docker", [int]$Runs = 3)
 
 $ErrorActionPreference = "Continue"

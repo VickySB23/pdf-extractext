@@ -1,4 +1,4 @@
-# Uso: .\tests\stress\run-vegeta-docker.ps1 -Label 11-vegeta-docker -Runs 3
+﻿# Uso: .\tests\stress\run-vegeta-docker.ps1 -Label 11-vegeta-docker -Runs 3
 param([string]$Label = "vegeta-docker", [int]$Runs = 3)
 
 $ErrorActionPreference = "Continue"

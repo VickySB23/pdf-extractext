@@ -1,4 +1,4 @@
-# Uso (desde cualquier carpeta):
+﻿# Uso (desde cualquier carpeta):
 #   .\tests\stress\run-vegeta.ps1 -Label 03-baseline-pypdf
 param(
     [string]$Label = "baseline",

@@ -1,4 +1,4 @@
-# Uso: .\tests\stress\run-experiment.ps1 -Label 06-maxconc2
+﻿# Uso: .\tests\stress\run-experiment.ps1 -Label 06-maxconc2
 param([Parameter(Mandatory = $true)][string]$Label)
 
 $ErrorActionPreference = "Continue"
@@ -21,7 +21,7 @@ function Start-Stats([string]$file) {
 # Reinicia y guarda la configuración efectiva (la anuncia el servicio al arrancar)
 & "$PSScriptRoot\restart-bench.ps1"
 $cfg = Join-Path $out "$Label-config.txt"
-docker compose -f docker-compose.bench.yml logs extraction-service |
+docker compose -f docker-compose.yml logs extraction-service |
     Select-String "MAX_CONCURRENT" | Select-Object -Last 1 | Out-File -Encoding utf8 $cfg
 Get-Content $cfg
 
