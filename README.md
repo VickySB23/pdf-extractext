@@ -290,3 +290,56 @@ curl -X DELETE "http://localhost:8000/api/documents/123e4567-e89b-12d3-a456-4266
 - No hay autenticacion ni autorizacion.
 - No hay endpoints de resumenes.
 - Los PDFs no se almacenan en disco; se procesa y persiste el texto extraido.
+
+# PDF Extract — Parte 2: test de carga y optimización
+
+Microservicio `POST /extract`: recibe un PDF (body binario `application/pdf` o `multipart/form-data`)
+y responde `200` con `{"content": "<markdown>", "page_count": N}`.
+
+## Levantar
+
+```bash
+docker compose up --build        # o con -d para dejarlo en segundo plano
+```
+
+Traefik escucha en `http://localhost:8080` y reparte entre 5 réplicas (1 CPU y 512 MiB cada una).
+
+```bash
+curl -X POST http://localhost:8080/extract -H "Content-Type: application/pdf" \
+     --data-binary "@tests/stress/pdfs/2020-Scrum-Guide-Spanish-Latin-South-American.pdf"
+```
+
+## Configuración (variables de entorno, ver `docker-compose.yml`)
+
+| Variable | Por defecto | Qué hace |
+|---|---|---|
+| `MAX_CONCURRENT` | 1 | Extracciones simultáneas por réplica |
+| `QUEUE_TIMEOUT_SECONDS` | 20 | Espera máxima por un lugar; si se agota, `503` con `Retry-After` |
+| `RETRY_AFTER_SECONDS` | 1 | Valor del header `Retry-After` |
+| `MAX_UPLOAD_SIZE_BYTES` | 10485760 | Tamaño máximo del PDF (`413` si se supera) |
+| `OUTPUT_FORMAT` | `markdown` | `markdown` o `text` |
+| `PORT` | 8001 | Puerto interno del servicio |
+
+## Pruebas de carga (PDFs oficiales en `tests/stress/pdfs`)
+
+Con el stack levantado, desde una terminal en la raíz del repositorio:
+
+```bash
+k6 run tests/stress/k6-spike.js                  # spike: 100 usuarios, 40 s
+./tests/stress/run-vegeta.sh mi-prueba           # 50 req/s durante 30 s (Linux/macOS/Git Bash)
+```
+
+```powershell
+.\tests\stress\run-vegeta.ps1 -Label mi-prueba   # Windows
+```
+
+Para medir dentro de la red de Docker (sin la capa de red de Docker Desktop):
+`.\tests\stress\run-k6-docker.ps1` y `.\tests\stress\run-vegeta-docker.ps1`.
+
+## Documentación
+
+- Informe técnico: `docs/informe/INFORME.md`
+- Registro de experimentos y mediciones crudas: `docs/mediciones/`
+- Sistema de la primera etapa (con MongoDB): `docker compose -f docker-compose.full.yml up --build`
+
+---
