@@ -11,7 +11,7 @@ import time
 import httpx
 
 from app import main
-from app.pdf_service import ExtractionResult
+from app.pdf_service import FORMATO_POR_DEFECTO, ExtractionResult
 from app.pdf_service import extract_text as _extract_real
 from tests.conftest import build_pdf
 
@@ -43,7 +43,7 @@ class ExtractorFalso:
         self.entró = threading.Event()
         self.salir = threading.Event()
 
-    def __call__(self, data: bytes, output_format: str = "markdown") -> ExtractionResult:
+    def __call__(self, data: bytes, output_format: str = FORMATO_POR_DEFECTO) -> ExtractionResult:
         # El handler ahora pasa OUTPUT_FORMAT como 2° argumento; se reenvía al
         # extractor real con el mismo default que el servicio.
         real = _extract_real(data, output_format)  # el _EXTRACTION_LOCK se libera acá
@@ -78,6 +78,9 @@ def test_503_con_retry_after_si_la_espera_supera_el_tope(monkeypatch):
             espera = time.perf_counter() - t0
             extractor.salir.set()
             r1 = await primera
+            # _value es un interno de asyncio (no hay API pública de permisos
+            # restantes): .locked() sólo distingue 0 de !=0 y no detecta un
+            # release() de más, mientras _value == 1 atrapa fuga y doble release.
             return r1, segunda, espera, main._get_semaphore()._value
 
     r1, r2, espera, permisos = asyncio.run(scenario())
@@ -90,7 +93,7 @@ def test_503_con_retry_after_si_la_espera_supera_el_tope(monkeypatch):
     assert permisos == 1  # ningún permiso quedó perdido
 
 
-def test_413_por_content_length_no_consume_el_semáforo(monkeypatch):
+def test_413_por_content_length_no_consume_el_semaforo(monkeypatch):
     """El rechazo barato va antes del semáforo: no hace cola ni gasta CPU."""
     monkeypatch.setattr(main, "MAX_CONCURRENT", 1)
     monkeypatch.setattr(main, "QUEUE_TIMEOUT_SECONDS", 0.2)
@@ -153,7 +156,7 @@ def test_las_peticiones_simultaneas_se_atienden_en_fila(monkeypatch):
     assert orden == ["pdf-0", "pdf-1", "pdf-2", "pdf-3"]  # FIFO del semáforo
 
 
-def test_el_semáforo_queda_libre_tras_un_error(monkeypatch):
+def test_el_semaforo_queda_libre_tras_un_error(monkeypatch):
     """(c) después de un error de extracción el semáforo queda libre."""
     monkeypatch.setattr(main, "MAX_CONCURRENT", 1)
     monkeypatch.setattr(main, "QUEUE_TIMEOUT_SECONDS", 5)
@@ -168,6 +171,9 @@ def test_el_semáforo_queda_libre_tras_un_error(monkeypatch):
             r_ok = await cliente.post(
                 "/extract", content=build_pdf("despues del error"), headers=PDF_HEADERS
             )
+            # _value es un interno de asyncio (no hay API pública de permisos
+            # restantes): .locked() sólo distingue 0 de !=0 y no detecta un
+            # release() de más, mientras _value == 1 atrapa fuga y doble release.
             return r_error, r_ok, main._get_semaphore()._value
 
     r_error, r_ok, permisos = asyncio.run(scenario())

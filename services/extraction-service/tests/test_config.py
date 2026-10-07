@@ -4,6 +4,7 @@ import importlib
 import pytest
 
 from app import main
+from app.pdf_service import FORMATOS, FORMATO_POR_DEFECTO
 
 VARIABLES = (
     "MAX_CONCURRENT",
@@ -57,17 +58,17 @@ def test_max_concurrent_invalido_falla_al_arrancar(monkeypatch, restaurar_main):
 def test_read_choice_rechaza_valores_invalidos(monkeypatch, valor):
     monkeypatch.setenv("OUTPUT_FORMAT", valor)
     with pytest.raises(RuntimeError, match="OUTPUT_FORMAT"):
-        main._read_choice("OUTPUT_FORMAT", "markdown", ("markdown", "text"))
+        main._read_choice("OUTPUT_FORMAT", FORMATO_POR_DEFECTO, FORMATOS)
 
 
 def test_read_choice_usa_el_default_si_no_esta_definida(monkeypatch):
     monkeypatch.delenv("OUTPUT_FORMAT", raising=False)
-    assert main._read_choice("OUTPUT_FORMAT", "markdown", ("markdown", "text")) == "markdown"
+    assert main._read_choice("OUTPUT_FORMAT", FORMATO_POR_DEFECTO, FORMATOS) == "markdown"
 
 
 def test_read_choice_ignora_mayusculas_y_espacios(monkeypatch):
     monkeypatch.setenv("OUTPUT_FORMAT", "  TEXT ")
-    assert main._read_choice("OUTPUT_FORMAT", "markdown", ("markdown", "text")) == "text"
+    assert main._read_choice("OUTPUT_FORMAT", FORMATO_POR_DEFECTO, FORMATOS) == "text"
 
 
 def test_output_format_invalido_falla_al_arrancar(monkeypatch, restaurar_main):

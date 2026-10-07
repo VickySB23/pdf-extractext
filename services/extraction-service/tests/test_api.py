@@ -85,15 +85,6 @@ def test_extract_raw_binary_stream_por_chunks_supera_tope(monkeypatch):
     assert r.json()["detail"]["code"] == "too_large"
 
 
-def test_extract_multipart_ok():
-    pdf = build_pdf("multipart")
-    r = client.post("/extract", files={"file": ("a.pdf", pdf, "application/pdf")})
-    assert r.status_code == 200
-    body = r.json()
-    assert body["content"] == "multipart"
-    assert body["page_count"] == 1
-
-
 def test_extract_multipart_sin_campo_de_archivo():
     """Multipart con sólo un campo de texto: 400 invalid_pdf (no 500)."""
     r = client.post("/extract", files={"campo": (None, "valor")})

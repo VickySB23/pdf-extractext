@@ -8,50 +8,39 @@ subtítulo (####). Las viñetas pasan a "-". Las líneas de un mismo bloque se
 juntan en un párrafo y los bloques se separan con una línea en blanco.
 """
 import re
+from typing import NamedTuple
 
 import pymupdf
 
-# Espacios raros que aparecen en PDFs (nbsp, en/em quad, tabuladores, ...).
-# Se reemplazan por un espacio común; las corridas se colapsan después.
-_ESPACIOS = str.maketrans(
-    {
-        **{chr(c): " " for c in range(0x2000, 0x200B)},  # en/em/thin quad, etc.
-        "\t": " ",
-        "\n": " ",
-        "\r": " ",
-        "\xa0": " ",    # no-break space
-        "\u1680": " ",  # ogham space mark
-        "\u200b": " ",  # zero-width space
-        "\u2028": " ",  # line separator
-        "\u2029": " ",  # paragraph separator
-        "\u202f": " ",  # narrow no-break space
-        "\u205f": " ",  # medium mathematical space
-        "\u3000": " ",  # ideographic space
-    }
-)
-
-# Marcas de lista: las originales (- • ◦ · *) más – ● ▪ ‣.
-_MARCAS_DE_VINETA = "-•◦·*\u2013\u25cf\u25aa\u2023"
+# Marcas de lista aceptadas como viñeta.
+_MARCAS_DE_VINETA = "-•◦·*–●▪‣"
 _NEGRITA = 16  # bit 4 de span["flags"] en PyMuPDF
 _LARGO_MAX_SUBTITULO = 60
 _PUNTO_FINAL = (".", "!", "?", "…")
 _RATIOS = ((1.60, 1), (1.30, 2), (1.12, 3))  # (ratio mínimo con el cuerpo, nivel)
 
 
+class Linea(NamedTuple):
+    clave: tuple[int, int]  # (página, bloque): agrupa las líneas de un párrafo
+    texto: str
+    tamano: float
+    negrita: bool
+
+
 def normalizar_espacios(texto: str) -> str:
     """Espacios raros -> espacio común, corridas colapsadas y bordes recortados."""
-    return re.sub(r" {2,}", " ", texto.translate(_ESPACIOS)).strip()
+    return re.sub(r"[\s\u200b]+", " ", texto).strip()
 
 
-def a_markdown(doc: pymupdf.Document) -> str:
-    """Documento PyMuPDF -> Markdown básico. Devuelve "" si no hay texto.
+def _leer_lineas(doc: pymupdf.Document) -> list[Linea]:
+    """Todas las líneas del documento en una sola pasada de lectura.
 
-    Una sola pasada de lectura, guardando tuplas compactas (no los dicts de
-    PyMuPDF, que ocupan muchísima memoria en documentos largos).
-    TEXTFLAGS_TEXT es obligatorio: sin él, get_text("dict") también extrae
-    imágenes y el mismo PDF pasa de ~14 ms a ~1.4 s por página.
+    Guarda NamedTuples compactos (no los dicts de PyMuPDF, que ocupan
+    muchísima memoria en documentos largos). TEXTFLAGS_TEXT es obligatorio:
+    sin él, get_text("dict") también extrae imágenes y el mismo PDF pasa de
+    ~14 ms a ~1.4 s por página.
     """
-    lineas: list[tuple[tuple[int, int], str, float, bool]] = []
+    lineas: list[Linea] = []
     for pno, pagina in enumerate(doc):
         datos = pagina.get_text("dict", flags=pymupdf.TEXTFLAGS_TEXT)
         for bno, bloque in enumerate(datos["blocks"]):
@@ -62,24 +51,52 @@ def a_markdown(doc: pymupdf.Document) -> str:
                 if not texto:
                     continue
                 dominante = max(linea["spans"], key=lambda s: len(s["text"]))
-                # Negrita: por flags o por el nombre de la fuente (hay fuentes
-                # con "bold" en el nombre que MuPDF no marca como negrita).
-                negrita = (
-                    bool(dominante["flags"] & _NEGRITA)
-                    or "bold" in dominante["font"].lower()
-                )
-                lineas.append(((pno, bno), texto, dominante["size"], negrita))
+                negrita = bool(dominante["flags"] & _NEGRITA)
+                lineas.append(Linea((pno, bno), texto, dominante["size"], negrita))
+    return lineas
 
+
+def _tamano_cuerpo(lineas: list[Linea]) -> int:
+    """Tamaño de fuente con más caracteres (el "cuerpo" del documento).
+
+    Se cuenta por round(tam): los PDFs derivan tamaños fraccionarios
+    (11.0 y 11.4 son el mismo cuerpo).
+    """
+    conteo: dict[int, int] = {}
+    for linea in lineas:
+        redondo = round(linea.tamano)
+        conteo[redondo] = conteo.get(redondo, 0) + len(linea.texto)
+    return max(conteo, key=lambda tam: conteo[tam])
+
+
+def _nivel_titulo(linea: Linea, cuerpo: int) -> int:
+    """0 = párrafo; 1-3 = título por proporción de tamaño; 4 = subtítulo.
+
+    El ratio usa el tamaño real de la línea, no el redondeado. Un renglón de
+    UN carácter (letra capitular como "P") NUNCA es título: se degrada a
+    párrafo y el carácter se conserva.
+    """
+    if len(linea.texto) <= 1:
+        return 0
+    ratio = linea.tamano / cuerpo
+    for minimo, n in _RATIOS:
+        if ratio >= minimo:
+            return n
+    if (
+        linea.negrita
+        and len(linea.texto) < _LARGO_MAX_SUBTITULO
+        and not linea.texto.endswith(_PUNTO_FINAL)
+    ):
+        return 4
+    return 0
+
+
+def a_markdown(doc: pymupdf.Document) -> str:
+    """Documento PyMuPDF -> Markdown básico. Devuelve "" si no hay texto."""
+    lineas = _leer_lineas(doc)
     if not lineas:
         return ""
-
-    # Cuerpo = tamaño de fuente con más caracteres. Se cuenta por round(tam):
-    # los PDFs derivan tamaños fraccionarios (11.0 y 11.4 son el mismo cuerpo).
-    conteo: dict[int, int] = {}
-    for _, texto, tam, _ in lineas:
-        redondo = round(tam)
-        conteo[redondo] = conteo.get(redondo, 0) + len(texto)
-    cuerpo = max(conteo, key=lambda tam: conteo[tam])
+    cuerpo = _tamano_cuerpo(lineas)
 
     salida: list[str] = []
     parrafo: list[str] = []
@@ -91,44 +108,30 @@ def a_markdown(doc: pymupdf.Document) -> str:
             salida.append(" ".join(parrafo))
             parrafo.clear()
 
-    for clave, texto, tam, negrita in lineas:
-        # a) viñeta: la marca manda sobre el tamaño de la letra
-        if texto[0] in _MARCAS_DE_VINETA and len(texto) > 1 and texto[1] == " ":
+    for linea in lineas:
+        # La marca de viñeta manda sobre el tamaño de la letra
+        if linea.texto[0] in _MARCAS_DE_VINETA and len(linea.texto) > 1 and linea.texto[1] == " ":
             volcar_parrafo()
             nivel_anterior = None
-            salida.append("- " + texto[1:].lstrip())
+            salida.append("- " + linea.texto[1:].lstrip())
             continue
 
-        # b) título por proporción de tamaño (el ratio usa el tamaño real de la
-        #    línea, no el redondeado). Un renglón de UN carácter (letra
-        #    capitular como "P") NUNCA es título: se degrada a párrafo y el
-        #    carácter se conserva.
-        nivel = 0
-        if len(texto) > 1:
-            ratio = tam / cuerpo
-            for minimo, n in _RATIOS:
-                if ratio >= minimo:
-                    nivel = n
-                    break
-            if nivel == 0 and negrita and len(texto) < _LARGO_MAX_SUBTITULO:
-                if not texto.endswith(_PUNTO_FINAL):
-                    nivel = 4
-
+        nivel = _nivel_titulo(linea, cuerpo)
         if nivel:
             volcar_parrafo()
             if nivel_anterior == nivel and salida:
                 # títulos consecutivos del mismo nivel: un solo renglón
-                salida[-1] = f"{salida[-1]} {texto}"
+                salida[-1] = f"{salida[-1]} {linea.texto}"
             else:
-                salida.append(f"{'#' * nivel} {texto}")
+                salida.append(f"{'#' * nivel} {linea.texto}")
             nivel_anterior = nivel
             continue
 
-        # c) párrafo: las líneas del mismo bloque van juntas
-        if clave != clave_de_bloque:
+        # Párrafo: las líneas del mismo bloque van juntas
+        if linea.clave != clave_de_bloque:
             volcar_parrafo()
-            clave_de_bloque = clave
-        parrafo.append(texto)
+            clave_de_bloque = linea.clave
+        parrafo.append(linea.texto)
         nivel_anterior = None  # una línea de cuerpo corta la racha de títulos
 
     volcar_parrafo()  # lo que quedó pendiente en la última página

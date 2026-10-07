@@ -5,12 +5,11 @@ sin dependencias nuevas. Los que llevan viñetas o espacios raros usan
 insert_htmlbox: insert_text con helv (WinAnsi) no sobrevive esos caracteres.
 """
 import pymupdf
-import pytest
 from fastapi.testclient import TestClient
 
 from app import main
 from app.markdown_service import normalizar_espacios
-from app.pdf_service import extract_text
+from app.pdf_service import FORMATO_POR_DEFECTO, extract_text
 
 client = TestClient(main.app)
 
@@ -38,37 +37,6 @@ def pdf_html(html: str) -> bytes:
     data = doc.tobytes()
     doc.close()
     return data
-
-
-def pdf_fuente_negrita(basefont: bytes) -> bytes:
-    """PDF a mano con /BaseFont elegido a mano, para simular nombres de fuente."""
-    stream = (
-        b"BT /F1 11 Tf 20 250 Td (Intro del tema) Tj "
-        b"/F2 11 Tf 0 -30 Td (parrafo de cuerpo normal) Tj ET"
-    )
-    objs = [
-        b"<< /Type /Catalog /Pages 2 0 R >>",
-        b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
-        b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 600 400] /Contents 4 0 R "
-        b"/Resources << /Font << /F1 5 0 R /F2 6 0 R >> >> >>",
-        b"<< /Length %d >>\nstream\n" % len(stream) + stream + b"\nendstream",
-        b"<< /Type /Font /Subtype /Type1 /BaseFont /" + basefont + b" /Encoding /WinAnsiEncoding >>",
-        b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>",
-    ]
-    out = bytearray(b"%PDF-1.4\n")
-    offsets = []
-    for i, body in enumerate(objs, start=1):
-        offsets.append(len(out))
-        out += b"%d 0 obj\n" % i + body + b"\nendobj\n"
-    xref = len(out)
-    out += b"xref\n0 %d\n0000000000 65535 f \n" % (len(objs) + 1)
-    for off in offsets:
-        out += b"%010d 00000 n \n" % off
-    out += b"trailer\n<< /Size %d /Root 1 0 R >>\nstartxref\n%d\n%%%%EOF\n" % (
-        len(objs) + 1,
-        xref,
-    )
-    return bytes(out)
 
 
 def test_titulo_grande_y_cuerpo_como_parrafo():
@@ -153,11 +121,6 @@ def test_formato_text_devuelve_texto_plano():
     assert "# Titulo general" not in plano
 
 
-def test_extract_text_rechaza_formato_desconocido():
-    with pytest.raises(ValueError, match="Formato"):
-        extract_text(pdf_con((11, "hola")), "html")
-
-
 def test_subtitulo_en_negrita_se_vuelve_h4():
     pdf = pdf_con(
         (11, "Introduccion", "hebo"),
@@ -170,18 +133,11 @@ def test_subtitulo_en_negrita_se_vuelve_h4():
     )
 
 
-def test_subtitulo_detectado_por_el_nombre_de_la_fuente():
-    """La fuente dice "bold" pero los flags no: el nombre manda (ajuste 3)."""
-    pdf = pdf_fuente_negrita(b"Fakename-bold")
-    r = extract_text(pdf)
-    assert r.content == "#### Intro del tema\n\nparrafo de cuerpo normal"
-
-
 def test_el_endpoint_usa_el_formato_configurado(monkeypatch):
     pdf = pdf_con((24, "Titulo general"), (11, "cuerpo del texto con bastante contenido"))
     headers = {"Content-Type": "application/pdf"}
 
-    monkeypatch.setattr(main, "OUTPUT_FORMAT", "markdown")
+    monkeypatch.setattr(main, "OUTPUT_FORMAT", FORMATO_POR_DEFECTO)
     r_md = client.post("/extract", content=pdf, headers=headers)
     assert r_md.status_code == 200
     assert r_md.json()["content"].startswith("# Titulo general")

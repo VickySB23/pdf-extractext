@@ -1,14 +1,16 @@
 import asyncio
 import os
 import weakref
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException, Request
 from pydantic import BaseModel
+from starlette.datastructures import UploadFile
 
 from app.pdf_service import (
-    EncryptedPDFError,
+    FORMATOS,
+    FORMATO_POR_DEFECTO,
     ExtractionError,
-    InvalidPDFError,
     extract_text,
 )
 
@@ -66,7 +68,7 @@ QUEUE_TIMEOUT_SECONDS = _read_positive_int("QUEUE_TIMEOUT_SECONDS", 20)
 RETRY_AFTER_SECONDS = _read_positive_int("RETRY_AFTER_SECONDS", 1)
 
 # Formato de "content": Markdown básico (default) o texto plano.
-OUTPUT_FORMAT = _read_choice("OUTPUT_FORMAT", "markdown", ("markdown", "text"))
+OUTPUT_FORMAT = _read_choice("OUTPUT_FORMAT", FORMATO_POR_DEFECTO, FORMATOS)
 
 # Twelve-Factor: se anuncia la configuración efectiva por stdout al arrancar.
 # NO usar logging.getLogger(...).info() acá: el dictConfig de uvicorn no
@@ -109,16 +111,16 @@ class ExtractResponse(BaseModel):
     page_count: int
 
 
-# Cada error de dominio se traduce a un status HTTP y a un "code" estable
-_STATUS = {
-    InvalidPDFError: 400,
-    EncryptedPDFError: 400,
-}
-
-
 @app.get("/health")
 async def health():
     return {"status": "healthy"}
+
+
+def _error(
+    status: int, code: str, message: str, headers: dict[str, str] | None = None
+) -> HTTPException:
+    """Un solo lugar que arma el error HTTP: detail = {code, message}."""
+    return HTTPException(status, {"code": code, "message": message}, headers=headers)
 
 
 def _rechazar_si_content_length_excede(request: Request) -> None:
@@ -136,102 +138,90 @@ def _rechazar_si_content_length_excede(request: Request) -> None:
     except ValueError:
         return  # header inválido: que decida el stream
     if declared > MAX_UPLOAD_SIZE_BYTES:
-        raise HTTPException(
-            413, {"code": "too_large", "message": "El archivo supera el tamaño máximo."}
-        )
+        raise _error(413, "too_large", "El archivo supera el tamaño máximo.")
     if declared == 0:
-        raise HTTPException(400, {"code": "invalid_pdf", "message": "Archivo vacío."})
+        raise _error(400, "invalid_pdf", "Archivo vacío.")
 
 
-@app.post("/extract", response_model=ExtractResponse)
-async def extract(request: Request):
-    content_type = request.headers.get("content-type", "")
-    is_multipart = content_type.lower().startswith("multipart/form-data")
+async def _leer_multipart(request: Request) -> bytes:
+    """Primer archivo del formulario (campo "file" o el primero que haya).
 
-    if not is_multipart:
-        # Content-Length primero: es barato y no debe hacer cola.
-        _rechazar_si_content_length_excede(request)
+    Sin archivo (form vacío o sólo campos de texto) -> 400, no 500.
+    """
+    try:
+        form = await request.form()
+    except Exception:
+        raise _error(400, "invalid_pdf", "Multipart inválido.")
 
+    archivo = next((v for v in form.values() if isinstance(v, UploadFile)), None)
+    if archivo is None:
+        raise _error(400, "invalid_pdf", "No se recibió ningún archivo.")
+
+    data = await archivo.read()
+    if not data:
+        raise _error(400, "invalid_pdf", "Archivo vacío.")
+    if len(data) > MAX_UPLOAD_SIZE_BYTES:
+        raise _error(413, "too_large", "El archivo supera el tamaño máximo.")
+    return data
+
+
+async def _leer_cuerpo_crudo(request: Request) -> bytes:
+    """Body crudo leído por stream con tope (cubre chunked sin Content-Length).
+
+    El Content-Length ya se chequeó antes del semáforo; la firma %PDF- la
+    valida extract_text, que es la única fuente de verdad de "¿es un PDF?".
+    """
+    chunks: list[bytes] = []
+    total = 0
+    async for chunk in request.stream():
+        chunks.append(chunk)
+        total += len(chunk)
+        if total > MAX_UPLOAD_SIZE_BYTES:
+            raise _error(413, "too_large", "El archivo supera el tamaño máximo.")
+    data = b"".join(chunks)
+    if not data:
+        raise _error(400, "invalid_pdf", "Archivo vacío.")
+    return data
+
+
+@asynccontextmanager
+async def _lugar():
+    """Un lugar del semáforo, con espera acotada.
+
+    Siempre se libera: error de dominio, 400/413 o cliente que se desconectó
+    mientras subía el PDF (request.stream()/form() pueden abortar).
+    """
     semaphore = _get_semaphore()
     try:
         await asyncio.wait_for(semaphore.acquire(), timeout=QUEUE_TIMEOUT_SECONDS)
     except asyncio.TimeoutError:
         # No se lee el cuerpo: el PDF de la petición que espera no entra en memoria.
-        raise HTTPException(
+        raise _error(
             503,
-            {
-                "code": "overloaded",
-                "message": "El servicio está saturado. Reintentá en unos segundos.",
-            },
-            headers={"Retry-After": str(RETRY_AFTER_SECONDS)},
+            "overloaded",
+            "El servicio está saturado. Reintentá en unos segundos.",
+            {"Retry-After": str(RETRY_AFTER_SECONDS)},
         )
-
     try:
-        if is_multipart:
-            # Leer archivo desde multipart, campo "file"
-            try:
-                form = await request.form()
-            except Exception:
-                raise HTTPException(400, {"code": "invalid_pdf", "message": "Multipart inválido."})
+        yield
+    finally:
+        semaphore.release()
 
-            file = form.get("file")
-            if file is None:
-                # Intentar cualquier primer archivo
-                for v in form.values():
-                    file = v
-                    break
 
-            # Sin campo de archivo (form vacío o sólo campos de texto) -> 400, no 500
-            if file is None or isinstance(file, str):
-                raise HTTPException(
-                    400, {"code": "invalid_pdf", "message": "No se recibió ningún archivo."}
-                )
+@app.post("/extract", response_model=ExtractResponse)
+async def extract(request: Request):
+    es_multipart = request.headers.get("content-type", "").lower().startswith(
+        "multipart/form-data"
+    )
+    if not es_multipart:
+        # Content-Length primero: es barato y no debe hacer cola.
+        _rechazar_si_content_length_excede(request)
 
-            if hasattr(file, "file"):
-                # UploadFile-like
-                data = await file.read()
-            else:
-                # bytes directo
-                data = file if isinstance(file, (bytes, bytearray)) else bytes(file)
-
-            if not data:
-                raise HTTPException(400, {"code": "invalid_pdf", "message": "Archivo vacío."})
-            if len(data) > MAX_UPLOAD_SIZE_BYTES:
-                raise HTTPException(
-                    413, {"code": "too_large", "message": "El archivo supera el tamaño máximo."}
-                )
-        else:
-            # Body crudo: tratar como PDF. No usar request.body(), usar request.stream() con tope.
-            # (El Content-Length ya se validó arriba, antes del semáforo.)
-            chunks: list[bytes] = []
-            total = 0
-            async for chunk in request.stream():
-                chunks.append(chunk)
-                total += len(chunk)
-                if total > MAX_UPLOAD_SIZE_BYTES:
-                    raise HTTPException(
-                        413, {"code": "too_large", "message": "El archivo supera el tamaño máximo."}
-                    )
-            data = b"".join(chunks)
-
-            if not data:
-                raise HTTPException(400, {"code": "invalid_pdf", "message": "Archivo vacío."})
-            # Validar firma %PDF- para crudo (incluso si content-type no es pdf)
-            if not data.startswith(b"%PDF-"):
-                raise HTTPException(
-                    400, {"code": "invalid_pdf", "message": "El contenido no parece un PDF (falta la firma %PDF-)."}
-                )
-
+    async with _lugar():
+        data = await (_leer_multipart(request) if es_multipart else _leer_cuerpo_crudo(request))
         try:
             # PyMuPDF es CPU-bound
             result = await asyncio.to_thread(extract_text, data, OUTPUT_FORMAT)
         except ExtractionError as exc:
-            raise HTTPException(
-                _STATUS.get(type(exc), 400), {"code": exc.code, "message": str(exc)}
-            )
-
+            raise _error(400, exc.code, str(exc))
         return ExtractResponse(content=result.content, page_count=result.page_count)
-    finally:
-        # Siempre se libera: error de dominio, 400/413, o cliente que se
-        # desconectó mientras subía el PDF (request.stream()/form() pueden abortar).
-        semaphore.release()
