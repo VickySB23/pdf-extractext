@@ -1,8 +1,3 @@
-"""Compara a_markdown (Markdown básico) contra get_text() plano sobre los PDFs
-de estrés. NO entra en pytest. Desde la raíz del proyecto:
-
-    uv run --no-project --with pymupdf python tests/stress/bench_markdown.py
-"""
 import glob
 import os
 import statistics
@@ -15,6 +10,7 @@ import pymupdf
 
 from app.markdown_service import a_markdown
 
+# Uso: uv run --no-project --with pymupdf python tests/stress/bench_markdown.py
 REPETICIONES = 3
 
 
@@ -43,7 +39,7 @@ for ruta in archivos:
         datos = f.read()
     medias = {}
     for nombre, funcion in (("plano", plano), ("markdown", markdown)):
-        funcion(datos)  # calentamiento: no se cuenta
+        funcion(datos)
         tiempos = []
         for _ in range(REPETICIONES):
             t0 = time.perf_counter()

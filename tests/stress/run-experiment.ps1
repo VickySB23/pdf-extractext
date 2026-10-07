@@ -18,14 +18,12 @@ function Start-Stats([string]$file) {
     }
 }
 
-# Reinicia y guarda la configuración efectiva (la anuncia el servicio al arrancar)
 & "$PSScriptRoot\restart-bench.ps1"
 $cfg = Join-Path $out "$Label-config.txt"
 docker compose -f docker-compose.yml logs extraction-service |
     Select-String "MAX_CONCURRENT" | Select-Object -Last 1 | Out-File -Encoding utf8 $cfg
 Get-Content $cfg
 
-# --- k6 ---
 $job = Start-Stats (Join-Path $out "$Label-k6-stats.txt")
 k6 run --summary-export (Join-Path $out "$Label-k6.json") tests\stress\k6-spike.js
 Wait-Job $job | Out-Null
@@ -33,7 +31,6 @@ Remove-Job $job
 
 Start-Sleep 15
 
-# --- Vegeta ---
 & "$PSScriptRoot\restart-bench.ps1"
 $job = Start-Stats (Join-Path $out "$Label-vegeta-stats.txt")
 & "$PSScriptRoot\run-vegeta.ps1" -Label $Label

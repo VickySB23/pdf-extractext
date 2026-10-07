@@ -1,4 +1,5 @@
-﻿$ErrorActionPreference = "Stop"
+﻿# Uso: .\tests\stress\restart-bench.ps1
+$ErrorActionPreference = "Stop"
 $root = Resolve-Path (Join-Path $PSScriptRoot "..\..")
 Set-Location $root
 

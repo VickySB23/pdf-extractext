@@ -6,6 +6,7 @@ import time
 import pymupdf
 import pypdfium2 as pdfium
 
+# Uso: uv run --no-project --with pymupdf --with pypdfium2 python tests/stress/experimentos/bench_variantes.py
 REPETICIONES = 5
 
 
@@ -50,7 +51,7 @@ for nombre, funcion in VARIANTES:
     for ruta in archivos:
         with open(ruta, "rb") as f:
             datos = f.read()
-        funcion(datos)  # calentamiento
+        funcion(datos)
         tiempos = []
         for _ in range(REPETICIONES):
             t0 = time.perf_counter()

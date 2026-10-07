@@ -27,7 +27,6 @@ def test_extract_no_pdf():
     assert r.json()["detail"]["code"] == "invalid_pdf"
 
 
-# Nuevos tests - raw binario (prioritario)
 def test_extract_raw_binary_ok():
     pdf = build_pdf("hola raw")
     r = client.post("/extract", content=pdf, headers={"Content-Type": "application/pdf"})
@@ -69,7 +68,6 @@ def test_extract_raw_binary_demasiado_grande(monkeypatch):
 
 
 def test_extract_raw_binary_stream_por_chunks_supera_tope(monkeypatch):
-    """Body crudo como generador de chunks (Transfer-Encoding: chunked, sin Content-Length)."""
     from app import main
 
     monkeypatch.setattr(main, "MAX_UPLOAD_SIZE_BYTES", 10)
@@ -86,7 +84,6 @@ def test_extract_raw_binary_stream_por_chunks_supera_tope(monkeypatch):
 
 
 def test_extract_multipart_sin_campo_de_archivo():
-    """Multipart con sólo un campo de texto: 400 invalid_pdf (no 500)."""
     r = client.post("/extract", files={"campo": (None, "valor")})
     assert r.request.headers["content-type"].startswith("multipart/form-data")
     assert r.status_code == 400
@@ -94,7 +91,6 @@ def test_extract_multipart_sin_campo_de_archivo():
 
 
 def test_extract_cifrado():
-    # Generar PDF cifrado con pypdf
     pdf = build_pdf("secreto")
     reader = PdfReader(BytesIO(pdf))
     writer = PdfWriter()
@@ -109,13 +105,10 @@ def test_extract_cifrado():
     assert r.json()["detail"]["code"] == "encrypted_pdf"
 
 
-# PDF dañado: MuPDF "repara" en vez de fallar, así que sin páginas no hay texto
 def test_extract_pdf_truncado():
-    # Cortar antes del árbol de páginas: conserva la cabecera %PDF- pero deja el PDF
-    # sin páginas. (Cortar más tarde no sirve: MuPDF recupera el PDF entero de los
-    # objetos que quedan y devuelve texto.)
+    # MuPDF repara PDFs truncados en vez de fallar; sin páginas debe ser error.
     pdf = build_pdf("hola")
-    truncado = pdf[: len(pdf) // 10]  # sólo cabecera + catálogo
+    truncado = pdf[: len(pdf) // 10]
     assert truncado.startswith(b"%PDF-")
     r = client.post("/extract", content=truncado, headers={"Content-Type": "application/pdf"})
     assert r.status_code == 400
@@ -123,7 +116,6 @@ def test_extract_pdf_truncado():
 
 
 def test_extract_pdf_sin_objetos():
-    """Cabecera válida pero sin objetos ni páginas: tampoco es un PDF utilizable."""
     pdf = b"%PDF-1.4\n1 0 obj\n<< >>\nendobj\ntrailer\n<< >>\n%%EOF\n"
     r = client.post("/extract", content=pdf, headers={"Content-Type": "application/pdf"})
     assert r.status_code == 400

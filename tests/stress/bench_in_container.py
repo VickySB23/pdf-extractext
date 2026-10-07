@@ -7,10 +7,11 @@ import time
 sys.path.insert(0, "/app")
 from app.pdf_service import extract_text
 
+# Uso: python /work/bench_in_container.py
 for ruta in sorted(glob.glob("/tmp/pdfs/*.pdf")):
     with open(ruta, "rb") as f:
         data = f.read()
-    extract_text(data)  # calentamiento, no se cuenta
+    extract_text(data)
     reloj, cpu = [], []
     for _ in range(5):
         w0, c0 = time.perf_counter(), time.process_time()

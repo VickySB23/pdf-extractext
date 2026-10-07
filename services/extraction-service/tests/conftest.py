@@ -2,7 +2,6 @@ import pytest
 
 
 def build_pdf(text: str) -> bytes:
-    """Arma un PDF mínimo válido con una línea de texto (sin dependencias extra)."""
     stream = f"BT /F1 18 Tf 20 100 Td ({text}) Tj ET".encode()
     objs = [
         b"<< /Type /Catalog /Pages 2 0 R >>",

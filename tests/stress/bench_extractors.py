@@ -7,6 +7,7 @@ import time
 import pymupdf
 from pypdf import PdfReader
 
+# Uso: uv run --no-project --with pymupdf --with pypdf python tests/stress/bench_extractors.py
 REPETICIONES = 5
 
 
@@ -32,7 +33,7 @@ for nombre, funcion in [("pypdf", con_pypdf), ("pymupdf", con_pymupdf)]:
     for ruta in archivos:
         with open(ruta, "rb") as f:
             datos = f.read()
-        funcion(datos)  # calentamiento: no se cuenta
+        funcion(datos)
         tiempos = []
         for _ in range(REPETICIONES):
             t0 = time.perf_counter()

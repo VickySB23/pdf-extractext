@@ -2,6 +2,7 @@ import http from 'k6/http';
 import { Trend } from 'k6/metrics';
 import { check } from 'k6';
 
+// Uso: k6 run tests/stress/k6-spike.js
 const statusTrend = new Trend('status_codes');
 
 export const options = {
@@ -12,10 +13,8 @@ export const options = {
     ],
 };
 
-// Por defecto apunta al compose de benchmark; se puede cambiar con -e BASE_URL=...
 const BASE_URL = __ENV.BASE_URL || 'http://localhost:8080';
 
-// Carga de PDFs en modo binario durante la inicialización (init context de k6)
 const pdfFiles = [
     open('./pdfs/2020-Scrum-Guide-Spanish-Latin-South-American.pdf', 'b'),
     open('./pdfs/Essential-Kanban-Condensed-Spanish.pdf', 'b'),
@@ -24,7 +23,6 @@ const pdfFiles = [
 ];
 
 export default function () {
-    // Selección aleatoria de un PDF de la lista
     const randomPdf = pdfFiles[Math.floor(Math.random() * pdfFiles.length)];
 
     const params = {

@@ -1,9 +1,3 @@
-"""Markdown de /extract: títulos, viñetas, espacios, formato y su configuración.
-
-Los PDFs se generan en el acto (insert_text / insert_htmlbox / bytes a mano),
-sin dependencias nuevas. Los que llevan viñetas o espacios raros usan
-insert_htmlbox: insert_text con helv (WinAnsi) no sobrevive esos caracteres.
-"""
 import pymupdf
 from fastapi.testclient import TestClient
 
@@ -15,7 +9,6 @@ client = TestClient(main.app)
 
 
 def pdf_con(*lineas) -> bytes:
-    """PDF de una página: cada línea es (tamaño, texto[, fuente]) vía insert_text."""
     doc = pymupdf.open()
     page = doc.new_page(width=595, height=842)
     y = 72.0
@@ -30,7 +23,6 @@ def pdf_con(*lineas) -> bytes:
 
 
 def pdf_html(html: str) -> bytes:
-    """PDF de una página con HTML: acá sí sobreviven viñetas y espacios raros."""
     doc = pymupdf.open()
     page = doc.new_page(width=595, height=842)
     page.insert_htmlbox(pymupdf.Rect(50, 50, 545, 500), html)
@@ -60,14 +52,12 @@ def test_titulo_partido_en_dos_renglones_se_fusiona():
 
 
 def test_capitular_de_un_caracter_no_vuelve_titulo():
-    """La letra capitular se degrada a párrafo: no se pierde el carácter."""
     pdf = pdf_con((24, "P"), (11, "arrafo con suficiente texto para ser el cuerpo"))
     r = extract_text(pdf)
     assert r.content == "P\n\narrafo con suficiente texto para ser el cuerpo"
 
 
 def test_el_cuerpo_se_cuenta_por_tamano_redondeado():
-    """11.0 y 11.4 son el mismo cuerpo: sin redondear, el título pasa a cuerpo."""
     pdf = pdf_con(
         (24.0, "Titulo del documento"),
         (11.0, "cuerpo de texto"),
@@ -84,7 +74,6 @@ def test_vinetas_se_convierten_en_guiones():
 
 
 def test_vinetas_con_las_marcas_nuevas_se_convierten_en_guiones():
-    """–, ●, ▪ y ‣ también son viñetas (ajuste sobre las marcas originales)."""
     pdf = pdf_html(
         "<p>\u2013 raya</p><p>\u25cf redonda</p><p>\u25aa cuadrada</p><p>\u2023 triplet</p>"
     )
