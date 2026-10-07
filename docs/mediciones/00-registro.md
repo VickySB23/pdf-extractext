@@ -141,3 +141,22 @@
 - Sin OOM en ninguna réplica.
 - Conclusión: la diferencia cae dentro de la variación entre corridas; la hipótesis del
   semáforo (recibir el cuerpo mientras otro extrae) NO se confirma. Se mantiene 1.
+
+
+## Exp. 11 - Costo del Markdown liviano (micro-benchmark, host Windows)
+- bench_markdown.py: plano 172 ms vs markdown 240 ms por PDF (1,33x a 1,49x).
+- pymupdf4llm descartado: 3,7 s vs 23 ms en un PDF de 16 páginas.
+
+## Exp. 12 - Medición final con Markdown (5 réplicas, MAX_CONCURRENT=1, cola 20 s)
+- Desde Windows: k6 266 peticiones, 5,88 req/s, 1,1 % error, p50 11,6 s, p95 20,8 s, máx 22,5 s;
+  Vegeta 8,33 % de éxito (125/1500).
+- Dentro de Docker (3 corridas): k6 12,90 / 12,91 / 13,03 req/s, 0 % error, p50 ~6,8 s,
+  p95 ~8,6 s; Vegeta 15,67 / 15,60 / 16,07 % de éxito.
+
+## Exp. 13 - Misma configuración con OUTPUT_FORMAT=text (dentro de Docker, 3 corridas)
+- k6: 19,42 / 19,68 / 19,69 req/s, 0 % error, p50 ~4,6 s, p95 ~5,7 s.
+- Conclusión: el Markdown liviano cuesta ~34 % de throughput (19,60 -> 12,95 req/s).
+
+## Verificación del compose único
+- `docker compose down; docker compose up --build` desde cero: 5 réplicas con límite
+  512 MiB, proceso sin privilegios (uid 10001), OUTPUT_FORMAT=markdown, 4 PDFs en 200.
