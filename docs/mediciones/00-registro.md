@@ -160,3 +160,11 @@
 ## Verificación del compose único
 - `docker compose down; docker compose up --build` desde cero: 5 réplicas con límite
   512 MiB, proceso sin privilegios (uid 10001), OUTPUT_FORMAT=markdown, 4 PDFs en 200.
+
+
+## Exp. 14 - Refactor (DRY, YAGNI, KISS) sin cambio de comportamiento
+- 54 pruebas automáticas, ~94 % de cobertura de líneas.
+- Hashes SHA-256 de la salida (Markdown y texto) de los 4 PDFs oficiales idénticos antes y después.
+- Control de k6 dentro de Docker (una corrida, 30-post-refactor-run1-k6.json): 599 peticiones,
+  14,16 req/s, 0 % de error, p50 6,18 s, p95 7,92 s, máx 9,22 s. Una corrida no alcanza para
+  afirmar mejora respecto de 12,95 req/s.
