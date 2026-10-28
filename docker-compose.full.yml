@@ -37,7 +37,7 @@ services:
       - backend       # para hablar con la db y el extraction-service
     labels:
       - "traefik.enable=true"
-      - "traefik.docker.network=traefik-net"   # obligatorio: el servicio está en 2 redes
+      - "traefik.docker.network=pdf-extractext_traefik-net"   # obligatorio: el servicio está en 2 redes
       - "traefik.http.routers.documents.rule=PathPrefix(`/api/documents`) || Path(`/health`)"
       - "traefik.http.routers.documents.entrypoints=web"
       - "traefik.http.services.documents.loadbalancer.server.port=8000"
@@ -46,9 +46,6 @@ services:
   extraction-service:
     build: ./services/extraction-service
     container_name: extraction_service
-    volumes:
-      - ./services/extraction-service/app:/app/app
-    command: uv run uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/health')"]
       interval: 5s
