@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, Request
 from pydantic import BaseModel
 from starlette.datastructures import UploadFile
+from starlette.formparsers import MultiPartParser
 
 from app.logger import logger
 from app.pdf_service import (
@@ -49,6 +50,11 @@ MAX_UPLOAD_SIZE_BYTES = _read_positive_int("MAX_UPLOAD_SIZE_BYTES", 10 * 1024 * 
 QUEUE_TIMEOUT_SECONDS = _read_positive_int("QUEUE_TIMEOUT_SECONDS", 20)
 RETRY_AFTER_SECONDS = _read_positive_int("RETRY_AFTER_SECONDS", 1)
 
+# Margen para los límites y encabezados del multipart.
+MULTIPART_OVERHEAD_BYTES = 1024 * 1024
+# Starlette pasa a disco las partes de más de 1 MB; el PDF debe quedar en memoria.
+MultiPartParser.spool_max_size = MAX_UPLOAD_SIZE_BYTES + MULTIPART_OVERHEAD_BYTES
+
 OUTPUT_FORMAT = _read_choice("OUTPUT_FORMAT", FORMATO_POR_DEFECTO, FORMATOS)
 
 logger.info(
@@ -83,15 +89,16 @@ def _error(
     return HTTPException(status, {"code": code, "message": message}, headers=headers)
 
 
-def _rechazar_si_content_length_excede(request: Request) -> None:
-    content_length = request.headers.get("content-length")
-    if content_length is None:
+def _rechazar_si_content_length_excede(request: Request, es_multipart: bool) -> None:
+    content_length = request.headers.get("content-length", "")
+    if not content_length.isascii() or not content_length.isdigit():
+        # El cuerpo crudo se corta al leerlo; el multipart se parsea completo.
+        if es_multipart:
+            raise _error(411, "length_required", "Falta el header Content-Length.")
         return
-    try:
-        declared = int(content_length)
-    except ValueError:
-        return
-    if declared > MAX_UPLOAD_SIZE_BYTES:
+    declared = int(content_length)
+    limite = MAX_UPLOAD_SIZE_BYTES + (MULTIPART_OVERHEAD_BYTES if es_multipart else 0)
+    if declared > limite:
         raise _error(413, "too_large", "El archivo supera el tamaño máximo.")
     if declared == 0:
         raise _error(400, "invalid_pdf", "Archivo vacío.")
@@ -152,8 +159,7 @@ async def extract(request: Request):
     es_multipart = request.headers.get("content-type", "").lower().startswith(
         "multipart/form-data"
     )
-    if not es_multipart:
-        _rechazar_si_content_length_excede(request)
+    _rechazar_si_content_length_excede(request, es_multipart)
 
     async with _lugar():
         # El cupo se adquiere antes de leer el cuerpo para no retener el PDF en memoria.
