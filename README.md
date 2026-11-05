@@ -50,8 +50,7 @@ MongoDB
 
 ## 3. Requisitos
 - Docker con Docker Compose.
-- k6 solo para ejecutar la prueba de carga tipo spike.
-- Vegeta solo para ejecutar la prueba de carga fija a 50 req/s.
+- k6 y Vegeta solo para las pruebas de carga desde el host. Los scripts `*-docker.ps1` los ejecutan como contenedores.
 - PowerShell, Bash, Git Bash o una terminal equivalente para los scripts.
 
 ## 4. Cómo levantar
@@ -72,7 +71,7 @@ Se muestra abreviada.
 
 ## 5. Configuración
 Estas son las variables de `extraction-service`. `document-service` usa `MONGO_URI`, `MONGO_DB_NAME`, `EXTRACTION_URL`, `CONSUL_URL` y `MAX_UPLOAD_SIZE_BYTES`.
-El compose inyecta las de cola y formato, y deja el tamaño máximo con su default.
+El compose inyecta las de Consul, cola y formato, y deja el tamaño máximo con su default.
 | Variable | Default | Uso |
 | --- | --- | --- |
 | `MAX_UPLOAD_SIZE_BYTES` | `10485760` | Tamaño máximo aceptado para el PDF. |
@@ -161,6 +160,57 @@ Para detener el stack sin borrar datos, usá `docker compose down`. `down -v` bo
 - No hay autenticación, autorización, OCR ni frontend. Los PDFs no se guardan; solo se persiste el texto extraído.
 - El gateway no publica la documentación interactiva (`/docs`).
 
-## 10. Licencia
+## 10. Cómo probarlo
+
+Desde la raíz del repositorio:
+
+```bash
+docker compose up --build -d --wait
+docker compose ps
+```
+
+Las pruebas siguientes usan `curl`; en PowerShell, escribí `curl.exe`.
+
+```bash
+curl http://localhost:8080/health
+curl -X POST http://localhost:8080/api/documents \
+  -F "file=@tests/stress/pdfs/Filosofia Lean.pdf;type=application/pdf"
+```
+
+Al repetir la subida, la API responde `400` porque el documento ya existe.
+
+Para probar con un cliente HTTP como Postman, Bruno o Insomnia:
+
+| Prueba | Petición | Body |
+| --- | --- | --- |
+| Extraer | `POST http://localhost:8080/extract` | Binario con el PDF y `Content-Type: application/pdf` |
+| Subir | `POST http://localhost:8080/api/documents` | `form-data`, clave `file`, tipo archivo |
+| Editar | `PUT http://localhost:8080/api/documents/{id}` | JSON: `{"new_text": "Texto nuevo"}` |
+
+Las interfaces web son Consul, en `http://localhost:8500`, y Traefik, en `http://localhost:8081`.
+
+Para ver la tolerancia a fallos, apagá una réplica. Consul muestra una instancia menos y la recupera al volver a iniciarla:
+
+```bash
+docker stop pdf-extractext-extraction-service-5
+docker start pdf-extractext-extraction-service-5
+```
+
+## 11. Seguridad
+
+El 5 de noviembre de 2026, `trivy fs .` no informó vulnerabilidades, secretos ni errores de configuración. `trivy image` no informó críticas en las imágenes propias ni paquetes de Python vulnerables; quedan paquetes de Debian.
+
+Las imágenes finales no incluyen `uv` ni `pip`, y corren con un usuario sin privilegios.
+
+## 12. Ramas
+
+| Rama | Contenido |
+| --- | --- |
+| `microservicios` | Versión final: microservicios, Consul, Traefik y pruebas de carga. |
+| `monolito` | Monolito de la etapa 1, corregido. |
+| `parte-dos` | Versión anterior, medida antes de la migración a Consul. |
+| `main` | Separación inicial del monolito. |
+
+## 13. Licencia
 El proyecto está publicado bajo licencia MIT; ver `LICENSE`.
 PyMuPDF se distribuye bajo AGPL-3.0 o licencia comercial, un punto a revisar fuera del contexto académico.
