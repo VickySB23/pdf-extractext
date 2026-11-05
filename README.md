@@ -4,7 +4,7 @@ Trabajo práctico universitario de Desarrollo de Software.
 Universidad Tecnológica Nacional, Facultad Regional San Rafael, Ingeniería en Sistemas.
 Año 2026.
 Integrantes: Julieta Bignet y Victoria Sanchez Bujaldon.
-Repositorio: https://github.com/VickySB23/pdf-extractext, rama `parte-dos`.
+Repositorio: https://github.com/VickySB23/pdf-extractext, rama `microservicios`.
 
 Este README documenta el stack de microservicios y las pruebas de carga. El monolito de la etapa 1 está en la rama `monolito`.
 
