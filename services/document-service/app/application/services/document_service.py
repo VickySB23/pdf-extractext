@@ -25,8 +25,7 @@ class DocumentService:
         logger.info(f"Iniciando procesamiento del documento: '{filename}'")
         extracted = await self._extractor.extract(file_content)
 
-        text = extracted.text.strip()
-        if not text:
+        if not extracted.text:
             logger.warning(f"El documento '{filename}' no contiene texto extraíble.")
             raise NoTextError("No se encontró texto extraíble en el PDF.")
 
@@ -42,7 +41,7 @@ class DocumentService:
         document = DocumentRecord(
             id=uuid.uuid4(),
             original_filename=filename,
-            full_text=text,
+            full_text=extracted.text,
             checksum=checksum,
             created_at=datetime.now(UTC),
         )

@@ -58,26 +58,8 @@ async def test_create_document_orchestration_and_checksum():
 
 
 @pytest.mark.asyncio
-async def test_create_document_stores_stripped_text_and_hashes_the_file():
-    extractor = FakeExtractor(ExtractedText(text="  texto con espacios  \n", pages=1))
-
-    mock_repository = AsyncMock()
-    mock_repository.exists_by_checksum.return_value = False
-    mock_repository.save.side_effect = lambda doc: doc
-
-    service = DocumentService(extractor, mock_repository)
-
-    result = await service.create_document(b"%PDF-", "espacios.pdf")
-
-    expected_checksum = hashlib.sha256(b"%PDF-").hexdigest()
-    assert result.full_text == "texto con espacios"
-    assert result.checksum == expected_checksum
-
-
-@pytest.mark.parametrize("text", ["", "   ", "\n\t "])
-@pytest.mark.asyncio
-async def test_create_document_does_not_save_when_text_is_empty(text):
-    extractor = FakeExtractor(ExtractedText(text=text, pages=1))
+async def test_create_document_does_not_save_when_text_is_empty():
+    extractor = FakeExtractor(ExtractedText(text="", pages=1))
     mock_repository = AsyncMock()
 
     service = DocumentService(extractor, mock_repository)

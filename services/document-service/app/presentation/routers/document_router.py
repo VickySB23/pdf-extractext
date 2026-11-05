@@ -20,15 +20,6 @@ from app.presentation.schemas.document_schema import DocumentResponse, DocumentU
 router = APIRouter(prefix="/api", tags=["documents"])
 
 
-def _retry_after_headers(retry_after: str | None) -> dict[str, str] | None:
-    """Devuelve un header Retry-After solo si el valor es un delta-segundos válido."""
-    if retry_after is None:
-        return None
-    value = retry_after.strip()
-    if not value or not value.isascii() or not value.isdigit():
-        return None
-    return {"Retry-After": value}
-
 def get_document_service(request: Request) -> DocumentService:
     """Inyecta el servicio orquestador en los endpoints para desacoplar las capas."""
     return request.app.state.document_service
@@ -56,7 +47,7 @@ async def create_document_endpoint(
         raise HTTPException(
             status_code=503,
             detail=str(e),
-            headers=_retry_after_headers(e.retry_after),
+            headers={"Retry-After": e.retry_after} if e.retry_after else None,
         )
     except ExtractorProtocolError as e:
         raise HTTPException(status_code=502, detail=str(e))

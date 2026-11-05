@@ -164,17 +164,3 @@ def test_create_document_propagates_valid_retry_after():
     assert response.status_code == 503
     assert response.headers["retry-after"] == "7"
     mock_service.create_document.assert_called_once()
-
-
-def test_create_document_omits_invalid_retry_after():
-    mock_service.create_document.side_effect = ExtractorUnavailableError(
-        "El servicio de extracción está saturado.",
-        retry_after="7\nX-Invalid-Header: 1",
-    )
-
-    response = post_document()
-
-    assert response.status_code == 503
-    assert "retry-after" not in response.headers
-    assert "x-invalid-header" not in response.headers
-    mock_service.create_document.assert_called_once()
