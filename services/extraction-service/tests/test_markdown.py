@@ -135,3 +135,10 @@ def test_el_endpoint_usa_el_formato_configurado(monkeypatch):
     r_txt = client.post("/extract", content=pdf, headers=headers)
     assert r_txt.status_code == 200
     assert r_txt.json()["content"].startswith("Titulo general")
+
+
+def test_texto_diminuto_no_rompe_la_conversion():
+    """Un tamaño de cuerpo que redondea a 0 no debe terminar en un 500."""
+    resultado = extract_text(pdf_con((0.4, "texto diminuto")))
+    assert resultado.page_count == 1
+    assert "diminuto" in resultado.content

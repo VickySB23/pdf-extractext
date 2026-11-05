@@ -47,7 +47,7 @@ def _tamano_cuerpo(lineas: list[Linea]) -> int:
     for linea in lineas:
         redondo = round(linea.tamano)
         conteo[redondo] = conteo.get(redondo, 0) + len(linea.texto)
-    return max(conteo, key=lambda tam: conteo[tam])
+    return max(max(conteo, key=lambda tam: conteo[tam]), 1)
 
 
 def _nivel_titulo(linea: Linea, cuerpo: int) -> int:
