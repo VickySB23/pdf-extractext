@@ -25,17 +25,17 @@ from app.presentation.routers.document_router import get_document_service
 mock_service = AsyncMock()
 mock_service.list_documents.return_value = []
 
-app.dependency_overrides[get_document_service] = lambda: mock_service
-
 client = TestClient(app)
 
 
 @pytest.fixture(autouse=True)
 def reset_mock_service():
+    app.dependency_overrides[get_document_service] = lambda: mock_service
     mock_service.create_document.reset_mock()
     mock_service.create_document.side_effect = None
     mock_service.create_document.return_value = None
     yield
+    app.dependency_overrides.pop(get_document_service, None)
     mock_service.create_document.side_effect = None
     mock_service.create_document.return_value = None
 
