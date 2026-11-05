@@ -116,6 +116,11 @@ El informe explica el análisis de capacidad, las hipótesis descartadas y el im
 services/
   extraction-service/      Extrae el texto del PDF
   document-service/        API de documentos y persistencia en MongoDB
+    app/core/              Configuración y logs
+    app/domain/            Conceptos y errores del dominio (extraction-service)
+    app/application/       Casos de uso
+    app/infrastructure/    PyMuPDF, MongoDB, Consul y clientes HTTP
+    app/presentation/      Rutas y esquemas HTTP
 tests/stress/              Scripts k6, Vegeta y PDFs oficiales
 docs/informe/              Informe técnico final
 docs/mediciones/           Registro y salidas crudas de medición

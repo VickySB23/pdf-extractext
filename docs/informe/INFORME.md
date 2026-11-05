@@ -27,7 +27,7 @@ k6 / Vegeta ──► Traefik v3.6 (puerto 8080) ──► 5 réplicas de extrac
 ### 2.2 Componentes
 
 - **Endpoint:** `POST /extract`. Acepta el PDF como *body* binario (`Content-Type: application/pdf`) o como `multipart/form-data`. Responde `200` con `{"content": "<markdown>", "page_count": N}`.
-- **Stack:** Python 3.12, FastAPI y uvicorn. Extracción con PyMuPDF.
+- **Stack:** Python 3.12, FastAPI y uvicorn. Extracción con PyMuPDF. `extraction-service` se organiza en capas `core`, `domain`, `application`, `infrastructure` y `presentation`.
 - **Contenerización y escalado:** un único `docker-compose.yml` con `deploy.replicas: 5`, límites `cpus: 1.0` y `memory: 512M` por réplica, límites en los demás contenedores e imágenes versionadas. Se levanta con `docker compose up --build`.
 - **Reverse proxy y descubrimiento:** cada réplica se registra en Consul con ID propio, chequeo HTTP y sus rutas como tags. Traefik v3.6 descubre las réplicas sanas desde Consul y reparte el tráfico con la estrategia `p2c`.
 - **Backpressure (control de saturación):** un cupo de una extracción por réplica. Una petición que no consigue lugar espera hasta `QUEUE_TIMEOUT_SECONDS=20` s; si se agota, recibe `503 Service Unavailable` con la cabecera `Retry-After`. El cupo se adquiere **antes de leer el cuerpo** del request, de modo que las peticiones que esperan no retienen su PDF en memoria.
@@ -42,7 +42,7 @@ k6 / Vegeta ──► Traefik v3.6 (puerto 8080) ──► 5 réplicas de extrac
 - **VI. Procesos:** el servicio no guarda estado. El PDF se procesa en memoria, sin escribirlo a disco, tanto por cuerpo binario como por `multipart`.
 - **VII. Port binding:** el servicio expone HTTP en el puerto fijo `8001` del contenedor; cada réplica es una red propia y Traefik publica el acceso.
 - **XI. Logs:** salida a *stdout*.
-- **Seguridad:** el proceso corre con un usuario sin privilegios dentro del contenedor.
+- **Seguridad:** el proceso corre con un usuario sin privilegios dentro del contenedor. Las imágenes se construyen en dos etapas, sin `uv` ni `pip` en la imagen final. `trivy fs` no informa vulnerabilidades, secretos ni errores de configuración. `trivy image` no informa críticas ni paquetes de Python vulnerables; quedan paquetes de Debian, en su mayoría sin corrección publicada.
 
 ---
 
@@ -147,7 +147,7 @@ Se identifican dos efectos distintos:
 
 ## 8. Calidad del código y pruebas
 
-- **Pruebas:** 57 pruebas automáticas en `services/extraction-service` (contrato HTTP, backpressure, configuración, Markdown, extracción), con ~94 % de cobertura de líneas.
+- **Pruebas:** 64 pruebas automáticas en `services/extraction-service` (contrato HTTP, backpressure, configuración, Markdown, extracción), con ~94 % de cobertura de líneas.
 - **Refactor DRY / YAGNI / KISS:** se eliminó código repetido (construcción de errores HTTP, constantes de formato, validación duplicada de la firma `%PDF-`), código inalcanzable y reglas sin efecto medible (por ejemplo, la detección de subtítulos por nombre de fuente, que no cambiaba el resultado en los 4 PDFs oficiales). Funciones largas se dividieron en funciones pequeñas.
 - **Verificación de que no cambió el comportamiento:** se compararon los hashes SHA-256 de la salida (Markdown y texto plano) de los 4 PDFs oficiales antes y después: los 8 resultaron idénticos.
 - **Control de rendimiento posterior:** una corrida de k6 dentro de Docker dio 14,16 req/s, 0 % de error, p50 6,18 s y p95 7,92 s. Al ser una sola corrida, no se afirma una mejora respecto de 12,95 req/s.

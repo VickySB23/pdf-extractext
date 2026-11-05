@@ -184,3 +184,8 @@
 - Vegeta dentro de Docker, una corrida, límite 20 req/s y ráfaga 40: 20,20 % de éxito (303/1500),
   429: 861, 503: 333, código 0: 3, p50 9,3 ms. El rate limit rechaza el exceso al instante,
   libera CPU y aumenta las respuestas exitosas.
+
+## Capas y dependencias (sin cambio de comportamiento)
+- Salidas de los 4 PDFs oficiales idénticas por SHA-256 antes y después de separar las capas.
+- pymupdf se limita a la rama 1.x: la 2.1 agrega onnxruntime, numpy y pymupdf4llm sin necesidad.
+- Motor se reemplazó por PyMongo Async, porque quedó deprecado en mayo de 2026.
