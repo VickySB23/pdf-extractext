@@ -21,7 +21,7 @@ function Start-Stats([string]$file) {
 & "$PSScriptRoot\restart-bench.ps1"
 $cfg = Join-Path $out "$Label-config.txt"
 docker compose -f docker-compose.yml logs extraction-service |
-    Select-String "MAX_CONCURRENT" | Select-Object -Last 1 | Out-File -Encoding utf8 $cfg
+    Select-String "QUEUE_TIMEOUT_SECONDS" | Select-Object -Last 1 | Out-File -Encoding utf8 $cfg
 Get-Content $cfg
 
 $job = Start-Stats (Join-Path $out "$Label-k6-stats.txt")

@@ -23,7 +23,6 @@ services:
           cpus: "1.0"
           memory: 512M
     environment:
-      MAX_CONCURRENT: "${MAX_CONCURRENT:-1}"
       QUEUE_TIMEOUT_SECONDS: "${QUEUE_TIMEOUT_SECONDS:-20}"
       RETRY_AFTER_SECONDS: "${RETRY_AFTER_SECONDS:-1}"
       OUTPUT_FORMAT: "${OUTPUT_FORMAT:-markdown}"
