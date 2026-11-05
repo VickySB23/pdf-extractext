@@ -5,19 +5,40 @@ services:
     image: traefik:v3.6
     command:
       - "--api.insecure=true"   # dashboard en :8081, solo para desarrollo
-      - "--providers.docker=true"
-      - "--providers.docker.exposedbydefault=false"
+      - "--providers.consulcatalog=true"
+      - "--providers.consulcatalog.endpoint.address=consul:8500"
+      - "--providers.consulcatalog.exposedbydefault=false"
+      - "--providers.consulcatalog.refreshinterval=5s"
       - "--entrypoints.web.address=:80"
     ports:
       - "8080:80"
       - "8081:8080"
-    volumes:
-      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+    depends_on:
+      consul:
+        condition: service_healthy
     deploy:
       resources:
         limits:
           cpus: "1.0"
           memory: 1G
+    networks:
+      - traefik-net
+
+  consul:
+    image: hashicorp/consul:1.21
+    command: agent -server -bootstrap-expect=1 -ui -client=0.0.0.0 -bind={{GetPrivateIP}}
+    ports:
+      - "8500:8500"
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 256M
+    healthcheck:
+      test: ["CMD-SHELL", "consul info | grep -q 'leader = true'"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
     networks:
       - traefik-net
 
@@ -31,6 +52,7 @@ services:
           cpus: "1.0"
           memory: 512M
     environment:
+      CONSUL_URL: http://consul:8500
       QUEUE_TIMEOUT_SECONDS: "${QUEUE_TIMEOUT_SECONDS:-20}"
       RETRY_AFTER_SECONDS: "${RETRY_AFTER_SECONDS:-1}"
       OUTPUT_FORMAT: "${OUTPUT_FORMAT:-markdown}"
@@ -40,14 +62,11 @@ services:
       timeout: 5s
       retries: 6
       start_period: 10s
+    depends_on:
+      consul:
+        condition: service_healthy
     networks:
       - traefik-net
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.extract.rule=Path(`/extract`)"
-      - "traefik.http.routers.extract.entrypoints=web"
-      - "traefik.http.services.extract.loadbalancer.server.port=8001"
-      - "traefik.http.services.extract.loadbalancer.strategy=p2c"
 
   document-service:
     image: pdf-document-service:v1.0.0
@@ -60,6 +79,7 @@ services:
     environment:
       MONGO_URI: mongodb://db:27017
       MONGO_DB_NAME: pdf_db
+      CONSUL_URL: http://consul:8500
       # Pasa por Traefik para balancear entre réplicas.
       EXTRACTION_URL: http://traefik
     healthcheck:
@@ -77,12 +97,6 @@ services:
     networks:
       - traefik-net
       - backend
-    labels:
-      - "traefik.enable=true"
-      - "traefik.docker.network=pdf-traefik-net"   # el servicio está en dos redes
-      - "traefik.http.routers.documents.rule=PathPrefix(`/api/documents`) || Path(`/health`)"
-      - "traefik.http.routers.documents.entrypoints=web"
-      - "traefik.http.services.documents.loadbalancer.server.port=8000"
 
   db:
     image: mongo:7.0
