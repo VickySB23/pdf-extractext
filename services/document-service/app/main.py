@@ -8,6 +8,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from app.application.services.document_service import DocumentService
 from app.core import get_settings
 from app.core.logger import logger
+from app.infrastructure.clients.consul_registry import ConsulRegistry
 from app.infrastructure.clients.http_text_extractor import HttpTextExtractor
 from app.infrastructure.repositories.mongo_repository import MongoDocumentRepository
 from app.presentation.routers.document_router import router as document_router
@@ -39,9 +40,15 @@ async def lifespan(app: FastAPI):
     app.state.document_service = document_service
     app.state.mongo_client = mongo_client
     app.state.text_extractor = text_extractor
+    consul_url = get_settings().consul_url
+    consul = ConsulRegistry(consul_url) if consul_url else None
+    if consul:
+        await consul.register()
     try:
         yield
     finally:
+        if consul:
+            await consul.deregister()
         await app.state.text_extractor.aclose()
         app.state.mongo_client.close()
         logger.info("--- Sistema apagado correctamente ---")
