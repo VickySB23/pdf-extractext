@@ -43,7 +43,7 @@ class HttpTextExtractor:
         )
         self._breaker = breaker or CircuitBreaker()
 
-    async def extract(self, filename: str, content: bytes) -> ExtractedText:
+    async def extract(self, content: bytes) -> ExtractedText:
         try:
             self._breaker.before_call()
         except CircuitOpenError as exc:
@@ -52,7 +52,8 @@ class HttpTextExtractor:
         try:
             response = await self._client.post(
                 "/extract",
-                files={"file": (filename, content, "application/pdf")},
+                content=content,
+                headers={"Content-Type": "application/pdf"},
             )
         except httpx.HTTPError as exc:
             self._breaker.record_failure()

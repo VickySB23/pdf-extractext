@@ -18,7 +18,7 @@ class DocumentService:
 
     async def create_document(self, file_content: bytes, filename: str) -> DocumentRecord:
         logger.info(f"Iniciando procesamiento del documento: '{filename}'")
-        extracted = await self._extractor.extract(filename, file_content)
+        extracted = await self._extractor.extract(file_content)
 
         text = extracted.text.strip()
         if not text:

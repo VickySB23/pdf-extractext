@@ -23,10 +23,10 @@ class FakeExtractor:
     def __init__(self, result: ExtractedText | None = None, error: Exception | None = None):
         self.result = result
         self.error = error
-        self.calls: list[tuple[str, bytes]] = []
+        self.calls: list[bytes] = []
 
-    async def extract(self, filename: str, content: bytes) -> ExtractedText:
-        self.calls.append((filename, content))
+    async def extract(self, content: bytes) -> ExtractedText:
+        self.calls.append(content)
         if self.error is not None:
             raise self.error
         assert self.result is not None
@@ -51,7 +51,7 @@ async def test_create_document_orchestration_and_checksum():
     assert result.original_filename == "test.pdf"
     assert result.full_text == text
     assert result.checksum == expected_checksum
-    assert extractor.calls == [("test.pdf", b"bytes falsos")]
+    assert extractor.calls == [b"bytes falsos"]
     mock_repository.exists_by_checksum.assert_awaited_once_with(expected_checksum)
     mock_repository.save.assert_awaited_once()
 
