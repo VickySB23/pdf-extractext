@@ -175,3 +175,12 @@
   p50 20,06 s. Las 5 réplicas siguieron sanas en las 14 muestras tomadas durante la prueba.
 - `docker stop` da de baja la réplica al instante; `docker kill` la saca en menos de 12 s y
   el servicio sigue respondiendo. Al volver, la réplica se registra sola.
+
+## Control con rate limit y circuit breaker en Traefik (sin archivo guardado)
+- Servicio de prueba con la misma expresión: 60 respuestas 503 no abrieron el circuito (las 60
+  llegaron al servicio); con 500 se abrió tras 11 y las otras 49 no llegaron.
+- k6 dentro de Docker, una corrida: 545 peticiones, 12,57 req/s, 0 % de error, p50 6,57 s,
+  p95 8,82 s, máx 9,84 s.
+- Vegeta dentro de Docker, una corrida, límite 20 req/s y ráfaga 40: 20,20 % de éxito (303/1500),
+  429: 861, 503: 333, código 0: 3, p50 9,3 ms. El rate limit rechaza el exceso al instante,
+  libera CPU y aumenta las respuestas exitosas.

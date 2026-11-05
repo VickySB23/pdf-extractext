@@ -39,6 +39,8 @@ MongoDB
 - Las imágenes propias están versionadas: `pdf-extraction-service:v1.0.0` y `pdf-document-service:v1.0.0`.
 - La extracción usa PyMuPDF por su mejor rendimiento frente a `pypdf`.
 - El backpressure se implementa con un cupo por réplica, `503` y header `Retry-After`.
+- Traefik aplica el rate limit (`429`, 20 req/s con ráfaga de 40 por cliente) y el circuit breaker. Su expresión excluye el `503`, porque es un rechazo controlado de la cola.
+- `document-service` reintenta hasta 3 veces los errores de conexión, `429`, `502` y `504`. No reintenta timeouts ni un `503` de cola llena.
 - El cupo se adquiere antes de leer el cuerpo para no retener PDFs en memoria.
 - El Markdown es una conversión propia y liviana: títulos, viñetas y párrafos.
 - La configuración entra por variables de entorno y los logs salen por stdout.
