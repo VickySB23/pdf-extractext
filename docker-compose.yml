@@ -1,20 +1,28 @@
-name: pdf-bench
+name: pdf-extractext
 
 services:
   traefik:
     image: traefik:v3.6
     command:
+      - "--api.insecure=true"   # dashboard en :8081, solo para desarrollo
       - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"
       - "--entrypoints.web.address=:80"
     ports:
       - "8080:80"
+      - "8081:8080"
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1G
     networks:
       - traefik-net
 
   extraction-service:
+    image: pdf-extraction-service:v1.0.0
     build: ./services/extraction-service
     deploy:
       replicas: 5
@@ -36,11 +44,70 @@ services:
       - traefik-net
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.extract.rule=Path(`/extract`) || Path(`/health`)"
+      - "traefik.http.routers.extract.rule=Path(`/extract`)"
       - "traefik.http.routers.extract.entrypoints=web"
       - "traefik.http.services.extract.loadbalancer.server.port=8001"
       - "traefik.http.services.extract.loadbalancer.strategy=p2c"
 
+  document-service:
+    image: pdf-document-service:v1.0.0
+    build: ./services/document-service
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+    environment:
+      MONGO_URI: mongodb://db:27017
+      MONGO_DB_NAME: pdf_db
+      # Pasa por Traefik para balancear entre réplicas.
+      EXTRACTION_URL: http://traefik
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+    depends_on:
+      traefik:
+        condition: service_started
+      db:
+        condition: service_healthy
+      extraction-service:
+        condition: service_healthy
+    networks:
+      - traefik-net
+      - backend
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=pdf-traefik-net"   # el servicio está en dos redes
+      - "traefik.http.routers.documents.rule=PathPrefix(`/api/documents`) || Path(`/health`)"
+      - "traefik.http.routers.documents.entrypoints=web"
+      - "traefik.http.services.documents.loadbalancer.server.port=8000"
+
+  db:
+    image: mongo:7.0
+    command: ["--wiredTigerCacheSizeGB", "0.25"]
+    volumes:
+      - mongo_data:/data/db
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    restart: unless-stopped
+    networks:
+      - backend
+
+volumes:
+  mongo_data:
+
 networks:
   traefik-net:
-    driver: bridge
+    name: pdf-traefik-net
+  backend:

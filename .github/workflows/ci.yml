@@ -30,7 +30,5 @@ jobs:
     needs: test
     steps:
       - uses: actions/checkout@v4
-      - name: Construir el stack de carga
+      - name: Construir todos los servicios
         run: docker compose build
-      - name: Construir el stack completo
-        run: docker compose -f docker-compose.full.yml build

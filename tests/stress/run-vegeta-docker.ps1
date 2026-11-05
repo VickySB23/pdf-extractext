@@ -26,7 +26,7 @@ for ($i = 1; $i -le $Runs; $i++) {
         }
     }
 
-    docker run --rm --network pdf-bench_traefik-net `
+    docker run --rm --network pdf-traefik-net `
         -v "${root}\tests\stress:/work" -v "${root}\results:/res" `
         --entrypoint /bin/sh peterevans/vegeta -c `
         "vegeta attack -rate=50 -duration=30s -timeout=30s -targets=/res/targets-docker.txt -output=/res/$Label-run$i.bin && vegeta report /res/$Label-run$i.bin" |

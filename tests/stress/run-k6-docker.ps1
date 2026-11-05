@@ -9,7 +9,7 @@ $out = Join-Path $root "docs\mediciones"
 for ($i = 1; $i -le $Runs; $i++) {
     & "$PSScriptRoot\restart-bench.ps1" | Out-Null
     $json = "$Label-run$i-k6.json"
-    docker run --rm --network pdf-bench_traefik-net `
+    docker run --rm --network pdf-traefik-net `
         -v "${root}\tests\stress:/work" -v "${out}:/out" -w /work `
         -e BASE_URL=http://traefik grafana/k6 run --quiet `
         --summary-export "/out/$json" k6-spike.js | Out-Null
