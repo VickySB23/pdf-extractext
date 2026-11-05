@@ -164,3 +164,8 @@
 - El candado global de PyMuPDF serializaba la extracción dentro de cada proceso, así que
   esos experimentos no podían mostrar paralelismo. La variable y el candado se eliminaron:
   ahora hay un cupo fijo de una extracción por réplica.
+
+## Control tras unificar el compose (sin archivo guardado)
+- Stack completo, Traefik limitado a 1 CPU y 1 GiB, k6 dentro de Docker, una corrida:
+  541 peticiones, 12,73 req/s, 0 % de error, p50 6,63 s, p95 8,88 s, máx 9,77 s.
+- Una corrida no alcanza para concluir; la medición final queda pendiente.

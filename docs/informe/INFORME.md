@@ -28,12 +28,12 @@ k6 / Vegeta ──► Traefik v3.6 (puerto 8080) ──► 5 réplicas de extrac
 
 - **Endpoint:** `POST /extract`. Acepta el PDF como *body* binario (`Content-Type: application/pdf`) o como `multipart/form-data`. Responde `200` con `{"content": "<markdown>", "page_count": N}`.
 - **Stack:** Python 3.12, FastAPI y uvicorn. Extracción con PyMuPDF.
-- **Contenerización y escalado:** `docker-compose.yml` con `deploy.replicas: 5` y límites `cpus: 1.0` y `memory: 512M` por réplica. Se levanta con `docker compose up --build`.
+- **Contenerización y escalado:** un único `docker-compose.yml` con `deploy.replicas: 5`, límites `cpus: 1.0` y `memory: 512M` por réplica, límites en los demás contenedores e imágenes versionadas. Se levanta con `docker compose up --build`.
 - **Reverse proxy:** Traefik v3.6 descubre las réplicas por etiquetas de Docker y reparte el tráfico con la estrategia `p2c`.
 - **Backpressure (control de saturación):** un cupo de una extracción por réplica. Una petición que no consigue lugar espera hasta `QUEUE_TIMEOUT_SECONDS=20` s; si se agota, recibe `503 Service Unavailable` con la cabecera `Retry-After`. El cupo se adquiere **antes de leer el cuerpo** del request, de modo que las peticiones que esperan no retienen su PDF en memoria.
 - **Una extracción por réplica:** PyMuPDF no admite uso concurrente desde varios hilos (lo indica su documentación), por lo que el cupo es fijo y el paralelismo real sale de las 5 réplicas. Hasta el refactor final existían además un candado y la variable `MAX_CONCURRENT`; el candado impedía que un valor mayor a 1 paralelizara la extracción.
 - **Markdown:** conversión liviana propia (títulos según el tamaño de la fuente, viñetas y párrafos). El interruptor `OUTPUT_FORMAT=markdown|text` permite volver al texto plano.
-- **Fuera del benchmark:** `document-service` y MongoDB (primera etapa del proyecto) permanecen en el repositorio; su compose es `docker-compose.full.yml`.
+- **Resto del stack:** `document-service` y MongoDB forman parte del mismo compose, pero no intervienen en el camino medido de `POST /extract`.
 
 ### 2.3 Twelve-Factor App
 
