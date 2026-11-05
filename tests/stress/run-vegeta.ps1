@@ -10,7 +10,8 @@ $ErrorActionPreference = "Stop"
 $root = Resolve-Path (Join-Path $PSScriptRoot "..\..")
 Set-Location $root
 
-$vegeta  = Join-Path $root "tools\vegeta.exe"
+$vegeta  = (Get-Command vegeta -ErrorAction SilentlyContinue).Source
+if (-not $vegeta) { $vegeta = Join-Path $root "tools\vegeta.exe" }
 $targets = "tests/stress/targets.txt"
 
 New-Item -ItemType Directory -Force results | Out-Null

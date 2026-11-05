@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main, parte-dos]
+    branches: [main, parte-dos, microservicios]
   pull_request:
 
 jobs:
@@ -30,5 +30,7 @@ jobs:
     needs: test
     steps:
       - uses: actions/checkout@v4
-      - name: Construir todos los servicios
+      - name: Construir el stack de carga
         run: docker compose build
+      - name: Construir el stack completo
+        run: docker compose -f docker-compose.full.yml build
