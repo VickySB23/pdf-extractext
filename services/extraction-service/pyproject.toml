@@ -1,7 +1,7 @@
 [project]
 name = "extraction-service"
 version = "0.1.0"
-description = "Microservicio stateless: extrae texto nativo de un PDF y calcula su checksum SHA-256"
+description = "Microservicio stateless: extrae el texto de un PDF y lo devuelve en Markdown"
 requires-python = ">=3.11"
 dependencies = [
     "fastapi>=0.115",
