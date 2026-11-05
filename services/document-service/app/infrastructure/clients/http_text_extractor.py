@@ -8,14 +8,12 @@ from app.application.interfaces.text_extractor import (
     ExtractorUnavailableError,
     FileTooLargeError,
     InvalidPDFError,
-    NoTextError,
     TextExtractionError,
 )
 from app.infrastructure.clients.circuit_breaker import CircuitBreaker, CircuitOpenError
 
 _MSG_INVALID = "No se pudo procesar el archivo PDF. Puede estar dañado o protegido."
 _MSG_ENCRYPTED = "El PDF está protegido con contraseña."
-_MSG_NO_TEXT = "No se encontró texto extraíble en el PDF."
 _MSG_TOO_LARGE = "El archivo excede el tamaño máximo permitido."
 _MSG_UNAVAILABLE = "El servicio de extracción no está disponible. Intentá nuevamente."
 _MSG_OVERLOADED = "El servicio de extracción está saturado. Reintentá en unos segundos."
@@ -24,9 +22,7 @@ _MSG_PROTOCOL = "El servicio de extracción devolvió una respuesta inválida."
 # code que devuelve el extraction-service -> excepción de dominio de este servicio
 _ERRORS: dict[str, tuple[type[TextExtractionError], str]] = {
     "invalid_pdf": (InvalidPDFError, _MSG_INVALID),
-    "too_large": (FileTooLargeError, _MSG_TOO_LARGE),
     "encrypted_pdf": (EncryptedPDFError, _MSG_ENCRYPTED),
-    "no_text": (NoTextError, _MSG_NO_TEXT),
 }
 
 

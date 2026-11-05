@@ -6,8 +6,6 @@ __pycache__/
 *.pyo
 *.pyd
 tests/
-summaries_db.json
-documents_db.json
 .pytest_cache/
 .coverage
 .env

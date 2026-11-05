@@ -17,7 +17,6 @@ from app.application.interfaces.text_extractor import (
     FileTooLargeError,
     InvalidPDFError,
     NoTextError,
-    TextExtractionError,
 )
 from app.main import app
 from app.presentation.routers.document_router import get_document_service
@@ -139,21 +138,6 @@ def test_create_document_returns_502_for_protocol_error():
     assert response.json()["detail"] == (
         "El servicio de extracción devolvió una respuesta inválida."
     )
-    mock_service.create_document.assert_called_once()
-
-
-def test_create_document_returns_502_for_unhandled_extraction_error():
-    mock_service.create_document.side_effect = TextExtractionError(
-        "detalle interno que no debe exponerse"
-    )
-
-    response = post_document()
-
-    assert response.status_code == 502
-    assert response.json()["detail"] == (
-        "No se pudo procesar la extracción del documento."
-    )
-    assert "detalle interno" not in response.text
     mock_service.create_document.assert_called_once()
 
 

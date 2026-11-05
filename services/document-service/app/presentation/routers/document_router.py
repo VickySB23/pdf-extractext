@@ -13,7 +13,6 @@ from app.application.interfaces.text_extractor import (
     FileTooLargeError,
     InvalidPDFError,
     NoTextError,
-    TextExtractionError,
 )
 from app.application.services.document_service import DocumentService
 from app.presentation.schemas.document_schema import DocumentResponse, DocumentUpdateRequest
@@ -61,11 +60,6 @@ async def create_document_endpoint(
         )
     except ExtractorProtocolError as e:
         raise HTTPException(status_code=502, detail=str(e))
-    except TextExtractionError:
-        raise HTTPException(
-            status_code=502,
-            detail="No se pudo procesar la extracción del documento.",
-        )
     except DuplicateDocumentError as e:
         raise HTTPException(status_code=400, detail=str(e))
 

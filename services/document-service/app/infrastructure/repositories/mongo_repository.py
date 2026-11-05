@@ -1,8 +1,11 @@
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from pymongo.errors import DuplicateKeyError
 from app.application.interfaces.document_repository import DocumentRecord, DuplicateDocumentError
+
+_LIST_LIMIT = 100
+
 
 class MongoDocumentRepository:
     def __init__(self, db: AsyncIOMotorDatabase):
@@ -18,7 +21,7 @@ class MongoDocumentRepository:
             "original_filename": document.original_filename,
             "full_text": document.full_text,
             "checksum": document.checksum,
-            "created_at": document.created_at.isoformat() if document.created_at else datetime.now(timezone.utc).isoformat()
+            "created_at": document.created_at.isoformat(),
         }
         try:
             await self._collection.insert_one(doc_dict)
@@ -30,9 +33,9 @@ class MongoDocumentRepository:
         doc = await self._collection.find_one({"_id": str(doc_id)})
         return self._map_to_record(doc) if doc else None
 
-    async def get_all(self, limit: int = 100) -> list[DocumentRecord]:
-        cursor = self._collection.find().limit(limit)
-        docs = await cursor.to_list(length=limit)
+    async def get_all(self) -> list[DocumentRecord]:
+        cursor = self._collection.find().limit(_LIST_LIMIT)
+        docs = await cursor.to_list(length=_LIST_LIMIT)
         return [self._map_to_record(doc) for doc in docs]
 
     async def update(self, doc_id: uuid.UUID, new_text: str) -> DocumentRecord | None:
@@ -58,5 +61,5 @@ class MongoDocumentRepository:
             original_filename=doc["original_filename"],
             full_text=doc["full_text"],
             checksum=doc["checksum"],
-            created_at=datetime.fromisoformat(doc["created_at"]) if doc.get("created_at") else None
+            created_at=datetime.fromisoformat(doc["created_at"]),
         )

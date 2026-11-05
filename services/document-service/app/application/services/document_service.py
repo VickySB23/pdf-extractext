@@ -4,6 +4,7 @@ Actúa como orquestador de la lógica de negocio, aplicando el principio de Resp
 """
 import hashlib
 import uuid
+from datetime import UTC, datetime
 from uuid import UUID
 
 from app.application.interfaces.document_repository import (
@@ -43,7 +44,7 @@ class DocumentService:
             original_filename=filename,
             full_text=text,
             checksum=checksum,
-            created_at=None,
+            created_at=datetime.now(UTC),
         )
 
         saved_doc = await self._repository.save(document)
@@ -54,9 +55,9 @@ class DocumentService:
         """Recupera un documento específico mediante su identificador único."""
         return await self._repository.get_by_id(doc_id)
 
-    async def list_documents(self, limit: int = 100) -> list[DocumentRecord]:
+    async def list_documents(self) -> list[DocumentRecord]:
         """Obtiene una lista paginada de todos los documentos almacenados."""
-        return await self._repository.get_all(limit)
+        return await self._repository.get_all()
 
     async def update_document(self, doc_id: UUID, new_text: str) -> DocumentRecord | None:
         """Actualiza el texto extraído de un documento existente."""

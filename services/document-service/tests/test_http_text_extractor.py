@@ -7,7 +7,6 @@ from app.application.interfaces.text_extractor import (
     ExtractorUnavailableError,
     FileTooLargeError,
     InvalidPDFError,
-    NoTextError,
 )
 from app.infrastructure.clients.circuit_breaker import CircuitBreaker
 from app.infrastructure.clients.http_text_extractor import HttpTextExtractor
@@ -55,7 +54,6 @@ async def test_texto_vacio_es_una_respuesta_valida():
     [
         (400, "invalid_pdf", InvalidPDFError),
         (400, "encrypted_pdf", EncryptedPDFError),
-        (400, "no_text", NoTextError),
         (413, "too_large", FileTooLargeError),
     ],
 )
