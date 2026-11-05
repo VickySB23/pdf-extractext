@@ -1,4 +1,7 @@
-"""Implementación remota de TextExtractor: llama al extraction-service por HTTP."""
+"""Implementación HTTP de TextExtractor: delega en el extraction-service a través de Traefik."""
+import asyncio
+from collections.abc import Awaitable, Callable
+
 import httpx
 
 from app.application.interfaces.text_extractor import (
@@ -10,7 +13,6 @@ from app.application.interfaces.text_extractor import (
     InvalidPDFError,
     TextExtractionError,
 )
-from app.infrastructure.clients.circuit_breaker import CircuitBreaker, CircuitOpenError
 
 _MSG_INVALID = "No se pudo procesar el archivo PDF. Puede estar dañado o protegido."
 _MSG_ENCRYPTED = "El PDF está protegido con contraseña."
@@ -25,72 +27,69 @@ _ERRORS: dict[str, tuple[type[TextExtractionError], str]] = {
     "encrypted_pdf": (EncryptedPDFError, _MSG_ENCRYPTED),
 }
 
+_ATTEMPTS = 3
+_BACKOFF_SECONDS = 0.5
+# Solo fallos rápidos: un 503 de cola llena ya esperó y reintentarlo agrava la saturación.
+_RETRYABLE_ERRORS = (httpx.ConnectError, httpx.RemoteProtocolError)
+_RETRYABLE_STATUS = {429, 502, 504}
+
 
 class HttpTextExtractor:
     def __init__(
         self,
         base_url: str,
         timeout: float = 30.0,
-        breaker: CircuitBreaker | None = None,
         client: httpx.AsyncClient | None = None,
+        wait: Callable[[float], Awaitable[None]] = asyncio.sleep,
     ):
         self._client = client or httpx.AsyncClient(
             base_url=base_url.rstrip("/"), timeout=timeout
         )
-        self._breaker = breaker or CircuitBreaker()
+        self._wait = wait
 
     async def extract(self, content: bytes) -> ExtractedText:
-        try:
-            self._breaker.before_call()
-        except CircuitOpenError as exc:
-            raise ExtractorUnavailableError(str(exc)) from exc
+        response = await self._post_with_retry(content)
+        status = response.status_code
 
-        try:
-            response = await self._client.post(
-                "/extract",
-                content=content,
-                headers={"Content-Type": "application/pdf"},
-            )
-        except httpx.HTTPError as exc:
-            self._breaker.record_failure()
-            raise ExtractorUnavailableError(_MSG_UNAVAILABLE) from exc
-
-        if response.status_code >= 500:
-            self._breaker.record_failure()
-            detail = self._detail(response)
-            if response.status_code == 503 and detail.get("code") == "overloaded":
-                raise ExtractorUnavailableError(
-                    _MSG_OVERLOADED,
-                    retry_after=response.headers.get("retry-after"),
-                )
-            raise ExtractorUnavailableError(_MSG_UNAVAILABLE)
-
-        if response.status_code == 413:
-            self._breaker.record_success()
+        if status == 200:
+            return self._parse_success(response)
+        if status == 413:
             raise FileTooLargeError(_MSG_TOO_LARGE)
 
-        if response.status_code == 200:
-            try:
-                extracted = self._parse_success(response)
-            except ExtractorProtocolError:
-                self._breaker.record_failure()
-                raise
-            self._breaker.record_success()
-            return extracted
+        detail = self._detail(response)
+        if status == 429 or detail.get("code") == "overloaded":
+            raise ExtractorUnavailableError(
+                _MSG_OVERLOADED, retry_after=response.headers.get("retry-after")
+            )
+        if status >= 500:
+            raise ExtractorUnavailableError(_MSG_UNAVAILABLE)
 
-        if 400 <= response.status_code < 500:
-            # El servicio respondió: un error de entrada no indica indisponibilidad.
-            self._breaker.record_success()
-            detail = self._detail(response)
-            code = detail.get("code")
-            error = _ERRORS.get(code) if isinstance(code, str) else None
-            if error is not None:
-                error_type, message = error
-                raise error_type(message)
+        code = detail.get("code")
+        error = _ERRORS.get(code) if isinstance(code, str) else None
+        if error is None:
             raise ExtractorProtocolError(_MSG_PROTOCOL)
+        error_type, message = error
+        raise error_type(message)
 
-        self._breaker.record_failure()
-        raise ExtractorProtocolError(_MSG_PROTOCOL)
+    async def _post_with_retry(self, content: bytes) -> httpx.Response:
+        for attempt in range(1, _ATTEMPTS + 1):
+            is_last = attempt == _ATTEMPTS
+            try:
+                response = await self._client.post(
+                    "/extract",
+                    content=content,
+                    headers={"Content-Type": "application/pdf"},
+                )
+            except _RETRYABLE_ERRORS as exc:
+                if is_last:
+                    raise ExtractorUnavailableError(_MSG_UNAVAILABLE) from exc
+            except httpx.HTTPError as exc:
+                raise ExtractorUnavailableError(_MSG_UNAVAILABLE) from exc
+            else:
+                if is_last or response.status_code not in _RETRYABLE_STATUS:
+                    return response
+            await self._wait(_BACKOFF_SECONDS * 2 ** (attempt - 1))
+        raise ExtractorUnavailableError(_MSG_UNAVAILABLE)
 
     @staticmethod
     def _parse_success(response: httpx.Response) -> ExtractedText:
