@@ -9,7 +9,7 @@ import pytest
 from fastapi.testclient import TestClient
 from unittest.mock import AsyncMock
 
-from app.application.interfaces.document_repository import DocumentRecord
+from app.application.interfaces.document_repository import DocumentRecord, DuplicateDocumentError
 from app.application.interfaces.text_extractor import (
     EncryptedPDFError,
     ExtractorProtocolError,
@@ -124,9 +124,7 @@ def test_create_document_returns_400_for_extraction_input_errors(error):
 
 
 def test_create_document_returns_400_for_duplicate():
-    mock_service.create_document.side_effect = ValueError(
-        "Un documento con este mismo contenido ya existe en la base de datos."
-    )
+    mock_service.create_document.side_effect = DuplicateDocumentError()
 
     response = post_document()
 

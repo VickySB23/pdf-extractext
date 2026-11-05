@@ -1,11 +1,16 @@
 import uuid
 from datetime import datetime, timezone
 from motor.motor_asyncio import AsyncIOMotorDatabase
-from app.application.interfaces.document_repository import DocumentRecord
+from pymongo.errors import DuplicateKeyError
+from app.application.interfaces.document_repository import DocumentRecord, DuplicateDocumentError
 
 class MongoDocumentRepository:
     def __init__(self, db: AsyncIOMotorDatabase):
         self._collection = db["documents"]
+
+    async def ensure_indexes(self) -> None:
+        """El índice único evita duplicados aunque dos subidas lleguen a la vez."""
+        await self._collection.create_index("checksum", unique=True)
 
     async def save(self, document: DocumentRecord) -> DocumentRecord:
         doc_dict = {
@@ -15,7 +20,10 @@ class MongoDocumentRepository:
             "checksum": document.checksum,
             "created_at": document.created_at.isoformat() if document.created_at else datetime.now(timezone.utc).isoformat()
         }
-        await self._collection.insert_one(doc_dict)
+        try:
+            await self._collection.insert_one(doc_dict)
+        except DuplicateKeyError as exc:
+            raise DuplicateDocumentError() from exc
         return self._map_to_record(doc_dict)
 
     async def get_by_id(self, doc_id: uuid.UUID) -> DocumentRecord | None:

@@ -16,8 +16,15 @@ class DocumentRecord:
     checksum: str
     created_at: datetime | None
 
+class DuplicateDocumentError(Exception):
+    """El archivo ya fue guardado."""
+
+    def __init__(self):
+        super().__init__("Un documento con este mismo contenido ya existe en la base de datos.")
+
 class DocumentRepository(Protocol):
     """Contrato CRUD completo (Create, Read, Update, Delete) para la base de datos."""
+    async def ensure_indexes(self) -> None: ...
     async def save(self, document: DocumentRecord) -> DocumentRecord: ...
     async def get_by_id(self, doc_id: UUID) -> DocumentRecord | None: ...
     async def get_all(self, limit: int = 100) -> list[DocumentRecord]: ...

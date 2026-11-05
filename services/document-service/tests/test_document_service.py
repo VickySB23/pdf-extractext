@@ -7,6 +7,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 
+from app.application.interfaces.document_repository import DuplicateDocumentError
 from app.application.interfaces.text_extractor import (
     EncryptedPDFError,
     ExtractedText,
@@ -96,7 +97,7 @@ async def test_create_document_rejects_duplicate_checksum():
 
     service = DocumentService(extractor, mock_repository)
 
-    with pytest.raises(ValueError, match="mismo contenido ya existe"):
+    with pytest.raises(DuplicateDocumentError):
         await service.create_document(b"%PDF-1.7 duplicado", "duplicado.pdf")
 
     expected_checksum = hashlib.sha256(b"%PDF-1.7 duplicado").hexdigest()

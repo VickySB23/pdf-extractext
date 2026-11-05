@@ -5,6 +5,7 @@ Se encarga exclusivamente de recibir peticiones, validar formatos y retornar res
 """
 from uuid import UUID
 from fastapi import APIRouter, File, UploadFile, HTTPException, Depends, Request
+from app.application.interfaces.document_repository import DuplicateDocumentError
 from app.application.interfaces.text_extractor import (
     EncryptedPDFError,
     ExtractorProtocolError,
@@ -81,7 +82,7 @@ async def create_document_endpoint(
             status_code=502,
             detail="No se pudo procesar la extracción del documento.",
         )
-    except ValueError as e:
+    except DuplicateDocumentError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
 @router.get("/documents", response_model=list[DocumentResponse])

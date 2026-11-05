@@ -3,7 +3,7 @@ import uuid
 from datetime import datetime, timezone
 from mongomock_motor import AsyncMongoMockClient
 from app.infrastructure.repositories.mongo_repository import MongoDocumentRepository
-from app.application.interfaces.document_repository import DocumentRecord
+from app.application.interfaces.document_repository import DocumentRecord, DuplicateDocumentError
 
 @pytest.fixture
 def mock_db():
@@ -55,3 +55,13 @@ async def test_exists_by_checksum_logic(repository):
     # 3. Assert
     assert exists_true is True
     assert exists_false is False
+
+
+@pytest.mark.asyncio
+async def test_unique_index_blocks_concurrent_duplicates(repository):
+    await repository.ensure_indexes()
+    now = datetime.now(timezone.utc)
+    await repository.save(DocumentRecord(uuid.uuid4(), "a.pdf", "texto", "mismo_hash", now))
+
+    with pytest.raises(DuplicateDocumentError):
+        await repository.save(DocumentRecord(uuid.uuid4(), "b.pdf", "texto", "mismo_hash", now))

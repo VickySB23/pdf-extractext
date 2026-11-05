@@ -15,26 +15,27 @@ from app.presentation.routers.health_router import router as health_router
 from app.presentation.upload_limits import keep_multipart_in_memory, reject_unbounded_uploads
 
 
-def create_app_services() -> tuple[DocumentService, AsyncIOMotorClient, HttpTextExtractor]:
+def create_app_services() -> tuple[
+    DocumentService, AsyncIOMotorClient, HttpTextExtractor, MongoDocumentRepository
+]:
     """Build application services and wire their infrastructure dependencies."""
     settings = get_settings()
     logger.info(f"Conectando a MongoDB en: {settings.mongo_uri} (DB: {settings.mongo_db_name})")
     client = AsyncIOMotorClient(settings.mongo_uri)
     db = client[settings.mongo_db_name]
     text_extractor = HttpTextExtractor(base_url=settings.extraction_url)
-    document_service = DocumentService(
-        extractor=text_extractor,
-        repository=MongoDocumentRepository(db),
-    )
+    repository = MongoDocumentRepository(db)
+    document_service = DocumentService(extractor=text_extractor, repository=repository)
     logger.info("Servicios ensamblados e inyectados correctamente.")
-    return document_service, client, text_extractor
+    return document_service, client, text_extractor, repository
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifecycle."""
     logger.info("--- Iniciando Sistema de Gestión de Documentos PDF ---")
-    document_service, mongo_client, text_extractor = create_app_services()
+    document_service, mongo_client, text_extractor, repository = create_app_services()
+    await repository.ensure_indexes()
     app.state.document_service = document_service
     app.state.mongo_client = mongo_client
     app.state.text_extractor = text_extractor

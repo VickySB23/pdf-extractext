@@ -6,7 +6,11 @@ import hashlib
 import uuid
 from uuid import UUID
 
-from app.application.interfaces.document_repository import DocumentRecord, DocumentRepository
+from app.application.interfaces.document_repository import (
+    DocumentRecord,
+    DocumentRepository,
+    DuplicateDocumentError,
+)
 from app.application.interfaces.text_extractor import NoTextError, TextExtractor
 from app.core.logger import logger
 
@@ -32,7 +36,7 @@ class DocumentService:
 
         if await self._repository.exists_by_checksum(checksum):
             logger.warning(f"Rechazado: El documento '{filename}' ya existe (Duplicado de Checksum).")
-            raise ValueError("Un documento con este mismo contenido ya existe en la base de datos.")
+            raise DuplicateDocumentError()
 
         document = DocumentRecord(
             id=uuid.uuid4(),
