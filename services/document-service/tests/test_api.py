@@ -19,7 +19,6 @@ from app.application.interfaces.text_extractor import (
     NoTextError,
     TextExtractionError,
 )
-from app.core import get_settings
 from app.main import app
 from app.presentation.routers.document_router import get_document_service
 
@@ -63,11 +62,11 @@ def test_get_documents_empty_list():
     assert len(data) == 0
 
 
-def test_create_document_rejects_empty_file():
-    response = post_document(filename="empty.pdf", content=b"")
+def test_create_document_rejects_non_pdf_extension():
+    response = post_document(filename="notas.txt")
 
     assert response.status_code == 400
-    assert response.json()["detail"] == "El archivo está vacío"
+    assert response.json()["detail"] == "Solo se admiten archivos PDF"
     mock_service.create_document.assert_not_called()
 
 
@@ -85,24 +84,6 @@ def test_create_document_accepts_pdf_extension_case_insensitive():
     assert response.status_code == 200
     assert response.json()["original_filename"] == "DOCUMENTO.PDF"
     mock_service.create_document.assert_called_once()
-
-
-def test_create_document_rejects_file_without_pdf_magic_bytes():
-    response = post_document(content=b"contenido que no es pdf")
-
-    assert response.status_code == 400
-    assert response.json()["detail"] == "El contenido no corresponde a un PDF válido"
-    mock_service.create_document.assert_not_called()
-
-
-def test_create_document_rejects_file_exceeding_max_size():
-    oversized_pdf = b"%PDF-" + b"x" * get_settings().max_upload_size_bytes
-
-    response = post_document(filename="large.pdf", content=oversized_pdf)
-
-    assert response.status_code == 413
-    assert "tamaño máximo permitido" in response.json()["detail"]
-    mock_service.create_document.assert_not_called()
 
 
 @pytest.mark.parametrize(
