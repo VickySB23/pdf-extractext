@@ -12,30 +12,29 @@ from app.core.logger import logger
 from app.infrastructure.repositories.mongo_repository import MongoDocumentRepository
 from app.presentation.routers.document_router import router as document_router
 from app.presentation.routers.health_router import router as health_router
+from app.presentation.upload_limits import keep_multipart_in_memory, reject_unbounded_uploads
 
 
-def create_app_services() -> tuple[DocumentService, AsyncIOMotorClient]:
+def create_app_services() -> tuple[DocumentService, AsyncIOMotorClient, MongoDocumentRepository]:
     """Build application services and wire their infrastructure dependencies."""
     settings = get_settings()
     logger.info(f"Conectando a MongoDB en: {settings.mongo_uri} (DB: {settings.mongo_db_name})")
     client = AsyncIOMotorClient(settings.mongo_uri)
     db = client[settings.mongo_db_name]
-    document_service = DocumentService(
-        pdf_service=PDFService(),
-        repository=MongoDocumentRepository(db),
-    )
+    repository = MongoDocumentRepository(db)
+    document_service = DocumentService(pdf_service=PDFService(), repository=repository)
     logger.info("Servicios ensamblados e inyectados correctamente.")
-    return document_service, client
+    return document_service, client, repository
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifecycle."""
     logger.info("--- Iniciando Sistema de Gestión de Documentos PDF ---")
-    document_service, mongo_client = create_app_services()
+    document_service, mongo_client, repository = create_app_services()
+    await repository.ensure_indexes()
     app.state.document_service = document_service
     app.state.mongo_client = mongo_client
-    get_settings().upload_dir.mkdir(parents=True, exist_ok=True)
     try:
         yield
     finally:
@@ -48,6 +47,9 @@ app = FastAPI(
     version="1.0.0",
     lifespan=lifespan,
 )
+
+keep_multipart_in_memory()
+app.middleware("http")(reject_unbounded_uploads)
 
 app.include_router(document_router)
 app.include_router(health_router)

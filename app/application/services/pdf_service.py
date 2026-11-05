@@ -1,4 +1,3 @@
-import hashlib
 import io
 from dataclasses import dataclass
 
@@ -11,7 +10,6 @@ from app.core.logger import logger
 class ExtractedPDF:
     filename: str
     text: str
-    checksum: str
 
 
 class PDFService:
@@ -44,12 +42,10 @@ class PDFService:
                 f"Texto extraído exitosamente de '{filename}' "
                 f"({len(reader.pages)} páginas procesadas)."
             )
-            checksum = hashlib.sha256(clean_text.encode("utf-8")).hexdigest()
 
             return ExtractedPDF(
                 filename=filename,
                 text=clean_text,
-                checksum=checksum,
             )
 
         except ValueError:

@@ -14,7 +14,7 @@ El objetivo del proyecto es ofrecer un backend simple y mantenible para gestiona
 - recibir archivos PDF por HTTP;
 - validar que el archivo sea un PDF procesable;
 - extraer texto nativo con `pypdf`, sin OCR;
-- calcular un checksum SHA-256 del texto extraido;
+- calcular un checksum SHA-256 del archivo PDF;
 - evitar documentos duplicados por checksum;
 - guardar, consultar, listar, actualizar y eliminar documentos en MongoDB.
 
@@ -93,8 +93,8 @@ pdf-extractext/
 - Extraccion de texto nativo del PDF en memoria.
 - Rechazo de PDFs sin texto extraible.
 - Rechazo de PDFs protegidos con contrasena o danados.
-- Calculo de checksum SHA-256 sobre el texto extraido.
-- Deteccion de duplicados por checksum antes de guardar.
+- Calculo de checksum SHA-256 sobre los bytes del archivo.
+- Deteccion de duplicados por checksum, respaldada por un indice unico en MongoDB.
 - Persistencia asincrona de documentos en MongoDB.
 - Listado de documentos guardados.
 - Consulta de un documento por UUID.
@@ -112,7 +112,8 @@ En `POST /api/documents`:
 - el contenido debe comenzar con la firma binaria `%PDF-`;
 - el PDF no debe estar protegido con contrasena;
 - el PDF debe tener texto nativo extraible;
-- el contenido extraido no puede duplicar el checksum de un documento existente.
+- el archivo no puede duplicar el checksum de un documento existente;
+- la subida requiere `Content-Length` y se mantiene en memoria, sin archivos temporales.
 
 En rutas con `{doc_id}`, FastAPI valida que el identificador tenga formato UUID. Si el documento no existe, los endpoints correspondientes devuelven `404`.
 
@@ -170,7 +171,6 @@ La configuracion se carga desde variables de entorno y, en desarrollo local, tam
 | --- | --- | --- | --- |
 | `MONGO_URI` | No | `mongodb://localhost:27017` | URI de conexion a MongoDB. |
 | `MONGO_DB_NAME` | No | `pdf-extractext` | Nombre de la base de datos. |
-| `UPLOAD_DIR` | No | `uploads` | Directorio creado al iniciar la app. No se usa para almacenar PDFs procesados. |
 | `MAX_UPLOAD_SIZE_BYTES` | No | `10485760` | Tamano maximo permitido para uploads. |
 
 `SECRET_KEY` no es utilizada por el backend actual.

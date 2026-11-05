@@ -15,7 +15,7 @@
 - Rechazo de PDF protegido con contrasena.
 - Rechazo de PDF danado o no procesable.
 - Rechazo de PDF sin texto extraible.
-- Checksum SHA-256 del texto extraido.
+- Checksum SHA-256 del archivo.
 - Deteccion de duplicados por checksum.
 - Persistencia asincrona en MongoDB con `motor`.
 - Repository Pattern mediante `DocumentRepository` y `MongoDocumentRepository`.

@@ -2,6 +2,8 @@
 Pruebas unitarias para el orquestador principal (DocumentService).
 Verifica que la capa de aplicación coordine correctamente el flujo de datos.
 """
+import hashlib
+
 import pytest
 from unittest.mock import AsyncMock, MagicMock
 from app.application.services.document_service import DocumentService
@@ -17,7 +19,6 @@ async def test_create_document_orchestration():
     mock_pdf_service.extract_text.return_value = ExtractedPDF(
             filename="test.pdf",
             text="texto extraido",
-            checksum="abcd1234"
         )
     
     mock_repository = AsyncMock()
@@ -32,7 +33,9 @@ async def test_create_document_orchestration():
     # 3. ASSERT
     assert result.original_filename == "test.pdf"
     assert result.full_text == "texto extraido"
-    assert result.checksum == "abcd1234"
+    expected_checksum = hashlib.sha256(b"bytes falsos").hexdigest()
+    assert result.checksum == expected_checksum
+    mock_repository.exists_by_checksum.assert_awaited_once_with(expected_checksum)
     
     # Verificamos la orquestación
     mock_pdf_service.extract_text.assert_called_once()

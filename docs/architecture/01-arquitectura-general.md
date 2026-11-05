@@ -166,7 +166,6 @@ Variables soportadas por `Settings`:
 
 | Variable | Valor por defecto | Uso actual |
 | --- | --- | --- |
-| `UPLOAD_DIR` | `uploads` | Se crea al iniciar la app. No almacena PDFs procesados. |
 | `MONGO_URI` | `mongodb://localhost:27017` | Conexion MongoDB. |
 | `MONGO_DB_NAME` | `pdf-extractext` | Base de datos usada por la app. |
 | `MAX_UPLOAD_SIZE_BYTES` | `10485760` | Limite de upload validado por el router. |

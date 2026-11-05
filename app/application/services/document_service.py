@@ -3,9 +3,14 @@ Módulo de servicios de aplicación para la gestión de documentos.
 Actúa como orquestador de la lógica de negocio, aplicando el principio de Responsabilidad Única (SRP).
 """
 import asyncio
+import hashlib
 import uuid
 from uuid import UUID
-from app.application.interfaces.document_repository import DocumentRecord, DocumentRepository
+from app.application.interfaces.document_repository import (
+    DocumentRecord,
+    DocumentRepository,
+    DuplicateDocumentError,
+)
 from app.application.services.pdf_service import PDFService
 from app.core.logger import logger
 
@@ -18,15 +23,16 @@ class DocumentService:
         logger.info(f"Iniciando procesamiento del documento: '{filename}'")
         extracted = await asyncio.to_thread(self._pdf_service.extract_text, file_content, filename)
         
-        if await self._repository.exists_by_checksum(extracted.checksum):
+        checksum = hashlib.sha256(file_content).hexdigest()
+        if await self._repository.exists_by_checksum(checksum):
             logger.warning(f"Rechazado: El documento '{filename}' ya existe (Duplicado de Checksum).")
-            raise ValueError("Un documento con este mismo contenido ya existe en la base de datos.")
+            raise DuplicateDocumentError()
         
         document = DocumentRecord(
             id=uuid.uuid4(),
             original_filename=filename,
             full_text=extracted.text,
-            checksum=extracted.checksum,
+            checksum=checksum,
             created_at=None,
         )
         

@@ -32,8 +32,8 @@ Diagrama: [02-secuencia-post-documento.puml](./diagrams/02-secuencia-post-docume
 15. `PDFService` recorre las paginas y llama `page.extract_text()`.
 16. `PDFService` concatena textos encontrados con saltos de linea y aplica `strip()`.
 17. Si no queda texto, `PDFService` lanza `ValueError`.
-18. `PDFService` calcula SHA-256 sobre el texto limpio codificado en UTF-8.
-19. `PDFService` devuelve `ExtractedPDF`.
+18. `PDFService` devuelve `ExtractedPDF`.
+19. `DocumentService` calcula SHA-256 sobre los bytes del archivo.
 20. `DocumentService` consulta `repository.exists_by_checksum`.
 21. Si ya existe el checksum, `DocumentService` lanza `ValueError`.
 22. `DocumentService` crea un `DocumentRecord` con `uuid4`, filename, texto, checksum y `created_at=None`.
@@ -119,8 +119,7 @@ Responsabilidades reales de `PDFService.extract_text`:
 8. unir el texto con `\n`;
 9. limpiar extremos con `strip()`;
 10. rechazar PDFs sin texto extraible;
-11. generar checksum SHA-256 sobre el texto limpio;
-12. devolver `ExtractedPDF`.
+11. devolver `ExtractedPDF`.
 
 ## Flujo de Health Check
 
