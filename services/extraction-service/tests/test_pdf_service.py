@@ -1,6 +1,7 @@
 import pytest
 
-from app.pdf_service import InvalidPDFError, extract_text
+from app.domain.extraction import InvalidPDFError
+from app.infrastructure.pymupdf_extractor import extract_text
 
 
 def test_extrae_texto_y_page_count(pdf_con_texto):

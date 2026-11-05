@@ -59,9 +59,9 @@ def test_extract_raw_binary_invalido():
 
 
 def test_extract_raw_binary_demasiado_grande(monkeypatch):
-    from app import main
+    from app.core import config
 
-    monkeypatch.setattr(main, "MAX_UPLOAD_SIZE_BYTES", 10)
+    monkeypatch.setattr(config, "MAX_UPLOAD_SIZE_BYTES", 10)
     pdf = build_pdf("hola")
     r = client.post("/extract", content=pdf, headers={"Content-Type": "application/pdf"})
     assert r.status_code == 413
@@ -69,9 +69,9 @@ def test_extract_raw_binary_demasiado_grande(monkeypatch):
 
 
 def test_extract_raw_binary_stream_por_chunks_supera_tope(monkeypatch):
-    from app import main
+    from app.core import config
 
-    monkeypatch.setattr(main, "MAX_UPLOAD_SIZE_BYTES", 10)
+    monkeypatch.setattr(config, "MAX_UPLOAD_SIZE_BYTES", 10)
     pdf = build_pdf("hola")
 
     def chunks():

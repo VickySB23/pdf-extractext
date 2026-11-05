@@ -1,32 +1,16 @@
 from collections.abc import Callable
-from dataclasses import dataclass
 
 import pymupdf
 
-from app.markdown_service import a_markdown
-
-FORMATOS = ("markdown", "text")
-FORMATO_POR_DEFECTO = "markdown"
+from app.domain.extraction import (
+    FORMATO_POR_DEFECTO,
+    EncryptedPDFError,
+    ExtractionResult,
+    InvalidPDFError,
+)
+from app.infrastructure.markdown_converter import a_markdown
 
 _MENSAJE_DANADO = "El PDF está dañado o no se pudo leer."
-
-
-class ExtractionError(Exception):
-    code: str
-
-
-class InvalidPDFError(ExtractionError):
-    code = "invalid_pdf"
-
-
-class EncryptedPDFError(ExtractionError):
-    code = "encrypted_pdf"
-
-
-@dataclass(frozen=True)
-class ExtractionResult:
-    content: str
-    page_count: int
 
 
 def _a_texto_plano(doc: pymupdf.Document) -> str:

@@ -4,8 +4,10 @@ import json
 import httpx
 import pytest
 
-from app import consul_client, main
-from app.consul_client import RegistroConsul
+from app import main
+from app.core import config
+from app.infrastructure import consul_client
+from app.infrastructure.consul_client import RegistroConsul
 
 
 def registro(handler, **kw) -> RegistroConsul:
@@ -83,7 +85,7 @@ def test_la_baja_no_rompe_el_apagado_si_consul_no_esta():
 
 
 def test_sin_consul_url_no_se_registra(monkeypatch):
-    monkeypatch.setattr(main, "CONSUL_URL", None)
+    monkeypatch.setattr(config, "CONSUL_URL", None)
     monkeypatch.setattr(consul_client, "ip_propia", lambda _url: pytest.fail("no debe resolver"))
 
     async def scenario():
@@ -103,7 +105,7 @@ def test_el_ciclo_de_vida_registra_y_da_de_baja(monkeypatch):
         async def desregistrar(self):
             llamadas.append("baja")
 
-    monkeypatch.setattr(main, "CONSUL_URL", "http://consul:8500")
+    monkeypatch.setattr(config, "CONSUL_URL", "http://consul:8500")
     monkeypatch.setattr(main, "crear_registro", lambda _cliente, _url: Falso())
 
     async def scenario():

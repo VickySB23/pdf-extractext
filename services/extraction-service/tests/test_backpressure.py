@@ -6,8 +6,10 @@ import httpx
 import pytest
 
 from app import main
-from app.pdf_service import FORMATO_POR_DEFECTO, ExtractionResult
-from app.pdf_service import extract_text as _extract_real
+from app.application import extraction_service
+from app.core import config
+from app.domain.extraction import FORMATO_POR_DEFECTO, ExtractionResult
+from app.infrastructure.pymupdf_extractor import extract_text as _extract_real
 from tests.conftest import build_pdf
 
 PDF_HEADERS = {"Content-Type": "application/pdf"}
@@ -17,7 +19,7 @@ TIMEOUT_HTTPX = 30.0
 @pytest.fixture(autouse=True)
 def cupo_nuevo(monkeypatch):
     """asyncio.run abre un loop por test y un semáforo en espera queda ligado a su loop."""
-    monkeypatch.setattr(main, "_CUPO", asyncio.Semaphore(1))
+    monkeypatch.setattr(extraction_service, "_CUPO", asyncio.Semaphore(1))
 
 
 def _client() -> httpx.AsyncClient:
@@ -48,10 +50,10 @@ class ExtractorFalso:
 
 
 def test_503_con_retry_after_si_la_espera_supera_el_tope(monkeypatch, caplog):
-    monkeypatch.setattr(main, "QUEUE_TIMEOUT_SECONDS", 0.2)
-    monkeypatch.setattr(main, "RETRY_AFTER_SECONDS", 3)
+    monkeypatch.setattr(config, "QUEUE_TIMEOUT_SECONDS", 0.2)
+    monkeypatch.setattr(config, "RETRY_AFTER_SECONDS", 3)
     extractor = ExtractorFalso(bloquear=True)
-    monkeypatch.setattr(main, "extract_text", extractor)
+    monkeypatch.setattr(extraction_service, "extract_text", extractor)
 
     async def scenario():
         async with _client() as cliente:
@@ -67,7 +69,7 @@ def test_503_con_retry_after_si_la_espera_supera_el_tope(monkeypatch, caplog):
             extractor.salir.set()
             r1 = await primera
             # _value detecta permisos fugados o releases de más; no hay API pública equivalente.
-            return r1, segunda, espera, main._CUPO._value
+            return r1, segunda, espera, extraction_service._CUPO._value
 
     r1, r2, espera, permisos = asyncio.run(scenario())
 
@@ -81,11 +83,11 @@ def test_503_con_retry_after_si_la_espera_supera_el_tope(monkeypatch, caplog):
 
 
 def test_413_por_content_length_no_consume_el_semaforo(monkeypatch):
-    monkeypatch.setattr(main, "QUEUE_TIMEOUT_SECONDS", 0.2)
+    monkeypatch.setattr(config, "QUEUE_TIMEOUT_SECONDS", 0.2)
     pdf_ocupa = build_pdf("ocupa")
-    monkeypatch.setattr(main, "MAX_UPLOAD_SIZE_BYTES", len(pdf_ocupa))
+    monkeypatch.setattr(config, "MAX_UPLOAD_SIZE_BYTES", len(pdf_ocupa))
     extractor = ExtractorFalso(bloquear=True)
-    monkeypatch.setattr(main, "extract_text", extractor)
+    monkeypatch.setattr(extraction_service, "extract_text", extractor)
 
     async def scenario():
         async with _client() as cliente:
@@ -110,10 +112,10 @@ def test_413_por_content_length_no_consume_el_semaforo(monkeypatch):
 
 
 def test_las_peticiones_simultaneas_se_atienden_en_fila(monkeypatch):
-    monkeypatch.setattr(main, "QUEUE_TIMEOUT_SECONDS", 20)
+    monkeypatch.setattr(config, "QUEUE_TIMEOUT_SECONDS", 20)
     orden: list[str] = []
     extractor = ExtractorFalso(demora=0.05, orden=orden)
-    monkeypatch.setattr(main, "extract_text", extractor)
+    monkeypatch.setattr(extraction_service, "extract_text", extractor)
 
     async def scenario():
         async with _client() as cliente:
@@ -138,7 +140,7 @@ def test_las_peticiones_simultaneas_se_atienden_en_fila(monkeypatch):
 
 
 def test_el_semaforo_queda_libre_tras_un_error(monkeypatch):
-    monkeypatch.setattr(main, "QUEUE_TIMEOUT_SECONDS", 5)
+    monkeypatch.setattr(config, "QUEUE_TIMEOUT_SECONDS", 5)
     pdf = build_pdf("hola")
     truncado = pdf[: len(pdf) // 10]
 
@@ -149,7 +151,7 @@ def test_el_semaforo_queda_libre_tras_un_error(monkeypatch):
                 "/extract", content=build_pdf("despues del error"), headers=PDF_HEADERS
             )
             # _value detecta permisos fugados o releases de más; no hay API pública equivalente.
-            return r_error, r_ok, main._CUPO._value
+            return r_error, r_ok, extraction_service._CUPO._value
 
     r_error, r_ok, permisos = asyncio.run(scenario())
 
@@ -159,9 +161,9 @@ def test_el_semaforo_queda_libre_tras_un_error(monkeypatch):
 
 
 def test_health_responde_200_mientras_hay_extraccion_en_curso(monkeypatch):
-    monkeypatch.setattr(main, "QUEUE_TIMEOUT_SECONDS", 10)
+    monkeypatch.setattr(config, "QUEUE_TIMEOUT_SECONDS", 10)
     extractor = ExtractorFalso(bloquear=True)
-    monkeypatch.setattr(main, "extract_text", extractor)
+    monkeypatch.setattr(extraction_service, "extract_text", extractor)
 
     async def scenario():
         async with _client() as cliente:

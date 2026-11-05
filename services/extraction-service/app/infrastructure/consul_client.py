@@ -6,7 +6,7 @@ from urllib.parse import urlsplit
 
 import httpx
 
-from app.logger import logger
+from app.core.logger import logger
 
 NOMBRE_SERVICIO = "extraction-service"
 PUERTO = 8001

@@ -5,7 +5,7 @@ import sys
 import time
 
 sys.path.insert(0, "/app")
-from app.pdf_service import extract_text
+from app.infrastructure.pymupdf_extractor import extract_text
 
 # Uso: python /work/bench_in_container.py
 for ruta in sorted(glob.glob("/tmp/pdfs/*.pdf")):

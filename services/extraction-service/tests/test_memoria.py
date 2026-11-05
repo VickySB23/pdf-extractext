@@ -4,6 +4,7 @@ from tempfile import SpooledTemporaryFile
 from fastapi.testclient import TestClient
 
 from app import main
+from app.core import config
 
 client = TestClient(main.app)
 MULTIPART = {"Content-Type": "multipart/form-data; boundary=x"}
@@ -37,7 +38,7 @@ def test_multipart_sin_content_length_es_411():
 
 
 def test_multipart_que_declara_demasiado_es_413_sin_leerlo():
-    limite = main.MAX_UPLOAD_SIZE_BYTES + main.MULTIPART_OVERHEAD_BYTES
+    limite = config.MAX_UPLOAD_SIZE_BYTES + config.MULTIPART_OVERHEAD_BYTES
 
     r = client.post(
         "/extract", content=b"x", headers={**MULTIPART, "Content-Length": str(limite + 1)}

@@ -2,8 +2,10 @@ import pymupdf
 from fastapi.testclient import TestClient
 
 from app import main
-from app.markdown_service import normalizar_espacios
-from app.pdf_service import FORMATO_POR_DEFECTO, extract_text
+from app.core import config
+from app.domain.extraction import FORMATO_POR_DEFECTO
+from app.infrastructure.markdown_converter import normalizar_espacios
+from app.infrastructure.pymupdf_extractor import extract_text
 
 client = TestClient(main.app)
 
@@ -126,12 +128,12 @@ def test_el_endpoint_usa_el_formato_configurado(monkeypatch):
     pdf = pdf_con((24, "Titulo general"), (11, "cuerpo del texto con bastante contenido"))
     headers = {"Content-Type": "application/pdf"}
 
-    monkeypatch.setattr(main, "OUTPUT_FORMAT", FORMATO_POR_DEFECTO)
+    monkeypatch.setattr(config, "OUTPUT_FORMAT", FORMATO_POR_DEFECTO)
     r_md = client.post("/extract", content=pdf, headers=headers)
     assert r_md.status_code == 200
     assert r_md.json()["content"].startswith("# Titulo general")
 
-    monkeypatch.setattr(main, "OUTPUT_FORMAT", "text")
+    monkeypatch.setattr(config, "OUTPUT_FORMAT", "text")
     r_txt = client.post("/extract", content=pdf, headers=headers)
     assert r_txt.status_code == 200
     assert r_txt.json()["content"].startswith("Titulo general")

@@ -4,8 +4,8 @@ import logging
 
 import pytest
 
-from app import main
-from app.pdf_service import FORMATOS, FORMATO_POR_DEFECTO
+from app.core import config
+from app.domain.extraction import FORMATOS, FORMATO_POR_DEFECTO
 
 VARIABLES = (
     "QUEUE_TIMEOUT_SECONDS",
@@ -18,19 +18,19 @@ INVALIDAS_ELECCION = ["html", "texto", "Markdown, text", "", "  "]
 
 
 @pytest.fixture
-def restaurar_main(monkeypatch):
-    """Deja app.main como estaba: los reloads los ejecutan en el sitio."""
+def restaurar_config(monkeypatch):
+    """Deja la configuración como estaba: los reloads los ejecutan en el sitio."""
     yield
     for nombre in VARIABLES:
         monkeypatch.delenv(nombre, raising=False)
-    importlib.reload(main)
+    importlib.reload(config)
 
 
 @pytest.mark.parametrize("valor", INVALIDAS)
 def test_read_positive_int_rechaza_valores_invalidos(monkeypatch, valor):
     monkeypatch.setenv("QUEUE_TIMEOUT_SECONDS", valor)
     with pytest.raises(RuntimeError, match="QUEUE_TIMEOUT_SECONDS"):
-        main._read_positive_int("QUEUE_TIMEOUT_SECONDS", 1)
+        config._read_positive_int("QUEUE_TIMEOUT_SECONDS", 1)
 
 
 @pytest.mark.parametrize(
@@ -43,44 +43,44 @@ def test_read_positive_int_rechaza_valores_invalidos(monkeypatch, valor):
 )
 def test_read_positive_int_usa_el_default_si_no_esta_definida(monkeypatch, nombre, default):
     monkeypatch.delenv(nombre, raising=False)
-    assert main._read_positive_int(nombre, default) == default
+    assert config._read_positive_int(nombre, default) == default
 
 
-def test_queue_timeout_invalido_falla_al_arrancar(monkeypatch, restaurar_main):
+def test_queue_timeout_invalido_falla_al_arrancar(monkeypatch, restaurar_config):
     """Un valor inválido detiene el arranque en vez de aceptarse en silencio."""
     monkeypatch.setenv("QUEUE_TIMEOUT_SECONDS", "muchos")
     with pytest.raises(RuntimeError, match="QUEUE_TIMEOUT_SECONDS"):
-        importlib.reload(main)
+        importlib.reload(config)
 
 
 @pytest.mark.parametrize("valor", INVALIDAS_ELECCION)
 def test_read_choice_rechaza_valores_invalidos(monkeypatch, valor):
     monkeypatch.setenv("OUTPUT_FORMAT", valor)
     with pytest.raises(RuntimeError, match="OUTPUT_FORMAT"):
-        main._read_choice("OUTPUT_FORMAT", FORMATO_POR_DEFECTO, FORMATOS)
+        config._read_choice("OUTPUT_FORMAT", FORMATO_POR_DEFECTO, FORMATOS)
 
 
 def test_read_choice_usa_el_default_si_no_esta_definida(monkeypatch):
     monkeypatch.delenv("OUTPUT_FORMAT", raising=False)
-    assert main._read_choice("OUTPUT_FORMAT", FORMATO_POR_DEFECTO, FORMATOS) == "markdown"
+    assert config._read_choice("OUTPUT_FORMAT", FORMATO_POR_DEFECTO, FORMATOS) == "markdown"
 
 
 def test_read_choice_ignora_mayusculas_y_espacios(monkeypatch):
     monkeypatch.setenv("OUTPUT_FORMAT", "  TEXT ")
-    assert main._read_choice("OUTPUT_FORMAT", FORMATO_POR_DEFECTO, FORMATOS) == "text"
+    assert config._read_choice("OUTPUT_FORMAT", FORMATO_POR_DEFECTO, FORMATOS) == "text"
 
 
-def test_output_format_invalido_falla_al_arrancar(monkeypatch, restaurar_main):
+def test_output_format_invalido_falla_al_arrancar(monkeypatch, restaurar_config):
     """Un OUTPUT_FORMAT inválido detiene el arranque, igual que las otras vars."""
     monkeypatch.setenv("OUTPUT_FORMAT", "html")
     with pytest.raises(RuntimeError, match="OUTPUT_FORMAT"):
-        importlib.reload(main)
+        importlib.reload(config)
 
 
-def test_el_arranque_anuncia_la_configuracion_en_el_log(monkeypatch, restaurar_main, caplog):
+def test_el_arranque_anuncia_la_configuracion_en_el_log(monkeypatch, restaurar_config, caplog):
     monkeypatch.setenv("QUEUE_TIMEOUT_SECONDS", "7")
     monkeypatch.setenv("OUTPUT_FORMAT", "text")
     with caplog.at_level(logging.INFO, logger="extraction-service"):
-        importlib.reload(main)
+        importlib.reload(config)
     assert "QUEUE_TIMEOUT_SECONDS=7" in caplog.text
     assert "OUTPUT_FORMAT=text" in caplog.text

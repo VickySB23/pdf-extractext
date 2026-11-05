@@ -8,7 +8,7 @@ sys.path.insert(0, os.path.join("services", "extraction-service"))
 
 import pymupdf
 
-from app.markdown_service import a_markdown
+from app.infrastructure.markdown_converter import a_markdown
 
 # Uso: uv run --no-project --with pymupdf python tests/stress/bench_markdown.py
 REPETICIONES = 3
