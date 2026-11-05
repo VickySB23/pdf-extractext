@@ -21,10 +21,11 @@ def test_extract_ok(pdf_con_texto):
     assert body["page_count"] == 1
 
 
-def test_extract_no_pdf():
+def test_extract_no_pdf(caplog):
     r = client.post("/extract", files={"file": ("a.pdf", b"nope", "application/pdf")})
     assert r.status_code == 400
     assert r.json()["detail"]["code"] == "invalid_pdf"
+    assert "invalid_pdf" in caplog.text
 
 
 def test_extract_raw_binary_ok():

@@ -47,7 +47,7 @@ class ExtractorFalso:
         return real
 
 
-def test_503_con_retry_after_si_la_espera_supera_el_tope(monkeypatch):
+def test_503_con_retry_after_si_la_espera_supera_el_tope(monkeypatch, caplog):
     monkeypatch.setattr(main, "QUEUE_TIMEOUT_SECONDS", 0.2)
     monkeypatch.setattr(main, "RETRY_AFTER_SECONDS", 3)
     extractor = ExtractorFalso(bloquear=True)
@@ -77,6 +77,7 @@ def test_503_con_retry_after_si_la_espera_supera_el_tope(monkeypatch):
     assert r2.headers["retry-after"] == "3"
     assert 0.15 <= espera < 3.0
     assert permisos == 1
+    assert "overloaded" in caplog.text
 
 
 def test_413_por_content_length_no_consume_el_semaforo(monkeypatch):

@@ -12,7 +12,7 @@ _MENSAJE_DANADO = "El PDF está dañado o no se pudo leer."
 
 
 class ExtractionError(Exception):
-    code = "extraction_error"
+    code: str
 
 
 class InvalidPDFError(ExtractionError):

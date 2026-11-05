@@ -1,5 +1,6 @@
-"""Arranque: lectura, validación y anuncio de la configuración por stdout."""
+"""Arranque: lectura, validación y anuncio de la configuración en el log."""
 import importlib
+import logging
 
 import pytest
 
@@ -76,10 +77,10 @@ def test_output_format_invalido_falla_al_arrancar(monkeypatch, restaurar_main):
         importlib.reload(main)
 
 
-def test_el_arranque_anuncia_la_configuracion_por_stdout(monkeypatch, restaurar_main, capsys):
+def test_el_arranque_anuncia_la_configuracion_en_el_log(monkeypatch, restaurar_main, caplog):
     monkeypatch.setenv("QUEUE_TIMEOUT_SECONDS", "7")
     monkeypatch.setenv("OUTPUT_FORMAT", "text")
-    importlib.reload(main)
-    salida = capsys.readouterr().out
-    assert "QUEUE_TIMEOUT_SECONDS=7" in salida
-    assert "OUTPUT_FORMAT=text" in salida
+    with caplog.at_level(logging.INFO, logger="extraction-service"):
+        importlib.reload(main)
+    assert "QUEUE_TIMEOUT_SECONDS=7" in caplog.text
+    assert "OUTPUT_FORMAT=text" in caplog.text

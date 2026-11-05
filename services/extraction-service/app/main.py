@@ -6,6 +6,7 @@ from fastapi import FastAPI, HTTPException, Request
 from pydantic import BaseModel
 from starlette.datastructures import UploadFile
 
+from app.logger import logger
 from app.pdf_service import (
     FORMATOS,
     FORMATO_POR_DEFECTO,
@@ -50,14 +51,13 @@ RETRY_AFTER_SECONDS = _read_positive_int("RETRY_AFTER_SECONDS", 1)
 
 OUTPUT_FORMAT = _read_choice("OUTPUT_FORMAT", FORMATO_POR_DEFECTO, FORMATOS)
 
-# print y no logging: el dictConfig de uvicorn no configura el logger raíz.
-print(
-    "[extraction-service]"
-    f" QUEUE_TIMEOUT_SECONDS={QUEUE_TIMEOUT_SECONDS}"
-    f" MAX_UPLOAD_SIZE_BYTES={MAX_UPLOAD_SIZE_BYTES}"
-    f" RETRY_AFTER_SECONDS={RETRY_AFTER_SECONDS}"
-    f" OUTPUT_FORMAT={OUTPUT_FORMAT}",
-    flush=True,
+logger.info(
+    "Configuración: QUEUE_TIMEOUT_SECONDS=%s MAX_UPLOAD_SIZE_BYTES=%s "
+    "RETRY_AFTER_SECONDS=%s OUTPUT_FORMAT=%s",
+    QUEUE_TIMEOUT_SECONDS,
+    MAX_UPLOAD_SIZE_BYTES,
+    RETRY_AFTER_SECONDS,
+    OUTPUT_FORMAT,
 )
 
 # PyMuPDF no admite uso concurrente desde varios hilos: una extracción por réplica.
@@ -134,6 +134,7 @@ async def _lugar():
     try:
         await asyncio.wait_for(_CUPO.acquire(), timeout=QUEUE_TIMEOUT_SECONDS)
     except asyncio.TimeoutError:
+        logger.warning("Petición rechazada (overloaded): cola de %s s agotada.", QUEUE_TIMEOUT_SECONDS)
         raise _error(
             503,
             "overloaded",
@@ -160,5 +161,6 @@ async def extract(request: Request):
         try:
             result = await asyncio.to_thread(extract_text, data, OUTPUT_FORMAT)
         except ExtractionError as exc:
+            logger.warning("PDF rechazado (%s): %s", exc.code, exc)
             raise _error(400, exc.code, str(exc))
         return ExtractResponse(content=result.content, page_count=result.page_count)

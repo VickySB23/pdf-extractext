@@ -1,6 +1,6 @@
 import pytest
 
-from app.pdf_service import EncryptedPDFError, InvalidPDFError, extract_text
+from app.pdf_service import InvalidPDFError, extract_text
 
 
 def test_extrae_texto_y_page_count(pdf_con_texto):
