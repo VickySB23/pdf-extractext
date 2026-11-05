@@ -104,12 +104,13 @@ Para medir desde la red de Docker se usan:
 Los valores se toman del informe técnico en `docs/informe/INFORME.md`.
 | Prueba | Referencia cátedra | Resultado final |
 | --- | ---: | ---: |
-| k6, throughput sostenido | 25,35 req/s | 12,95 req/s con Markdown |
-| k6, texto plano | 25,35 req/s | 19,60 req/s con `OUTPUT_FORMAT=text` |
-| Vegeta, tasa de éxito | 66,53 % | 15,8 % |
+| k6, throughput sostenido | 25,35 req/s | 12,78 req/s con Markdown |
+| k6, tasa de error | 0 % | 0 % con Markdown |
+| Vegeta, tasa de éxito | 66,53 % | 27,1 % con Markdown |
+| Vegeta, timeouts | 33,40 % | 1 como máximo, de 1.500 |
 
 No se superó la referencia de la cátedra.
-El informe explica el análisis de capacidad, las hipótesis descartadas y el impacto del Markdown.
+Son medias de 3 corridas dentro de la red de Docker. El informe explica el análisis de capacidad, las hipótesis descartadas y el impacto del Markdown y del rate limit.
 
 ## 8. Estructura del repositorio
 ```text

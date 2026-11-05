@@ -4,7 +4,7 @@
 **Institución:** Universidad Tecnológica Nacional – Facultad Regional San Rafael (UTN FRSR)
 **Integrantes:** Julieta Valentina Bignet, Victoria Sanchez Bujaldon
 **Repositorio:** https://github.com/VickySB23/pdf-extractext/tree/parte-dos
-**Versión medida:** commit `b3f9540` (mediciones finales). Un refactor posterior, sin cambios de comportamiento, se describe en la sección 8.
+**Versión medida:** commit `9a4bad8` (corridas 40 a 43 de `docs/mediciones/`).
 
 ---
 
@@ -19,9 +19,12 @@ El objetivo del trabajo es diseñar, evaluar y optimizar un microservicio de ext
 ### 2.1 Topología
 
 ```
-k6 / Vegeta ──► Traefik v3.6 (puerto 8080) ──► 5 réplicas de extraction-service
-                (balanceo p2c)                 (1 CPU y 512 MiB cada una)
-                                                PDF entra ► Markdown sale (JSON)
+Cliente, k6 o Vegeta ──► Traefik v3.6 (puerto 8080) ◄── rutas ── Consul ◄── registro de cada réplica
+                           │  rate limit y circuit breaker
+                           ├─ /extract ──────► 5 réplicas de extraction-service
+                           │                   (1 CPU y 512 MiB cada una)
+                           │                   PDF entra ► Markdown sale (JSON)
+                           └─ /api/documents ► document-service ──► MongoDB
 ```
 
 ### 2.2 Componentes
@@ -84,6 +87,11 @@ Con 5 réplicas de 1 CPU el techo teórico ronda los **23 req/s en texto plano**
 | 12 | **Medición final** con Markdown (5 réplicas, Traefik) | k6 dentro de Docker: 12,95 req/s. Vegeta dentro de Docker: 15,8 % | Configuración final |
 | 13 | Misma configuración con `OUTPUT_FORMAT=text` | k6 dentro de Docker: 19,60 req/s | El Markdown cuesta ~34 % de throughput |
 | 14 | Refactor (DRY, YAGNI, KISS) | Salidas idénticas en los 4 PDFs (SHA-256), 54 tests. Control de k6: 14,16 req/s, 0 % de error (una corrida) | Se incorpora (ver sección 8) |
+| 15 | Un cupo fijo por réplica | Se elimina `MAX_CONCURRENT` y el candado, que impedían paralelizar con cualquier valor | Se incorpora |
+| 16 | Consul para el descubrimiento | Con Vegeta, las 5 réplicas siguieron sanas en las 14 muestras; una réplica caída sale en menos de 12 s y vuelve sola | Se incorpora |
+| 17 | Circuit breaker en Traefik, excluyendo el `503` | Con un servicio de prueba, 60 respuestas `503` no abrieron el circuito; con `500` se abrió tras 11 | Se incorpora |
+| 18 | Rate limit de 20 req/s y ráfaga de 40 | Vegeta con Markdown pasa de ~15 % a 27,1 % de éxito; k6 con Markdown sigue con 0 % de error | Se incorpora |
+| 19 | **Medición final** (3 corridas por prueba) | k6 con Markdown: 12,78 req/s. Vegeta con Markdown: 27,1 % | Configuración final |
 
 **Aprendizajes:**
 - El mayor salto vino del cambio de librería de extracción (12 a 15 veces por PDF), no del balanceo ni de la concurrencia.
@@ -95,9 +103,9 @@ Con 5 réplicas de 1 CPU el techo teórico ronda los **23 req/s en texto plano**
 
 ## 6. Resultados
 
-### 6.1 Antes vs. después (mediciones desde Windows, una corrida)
+### 6.1 Antes vs. después de la primera optimización (desde Windows, una corrida, commit `b3f9540`)
 
-| Métrica | Antes (Exp. 1: pypdf, 1 réplica, sin control) | Después (final: PyMuPDF, 5 réplicas, backpressure, Markdown) |
+| Métrica | Antes (Exp. 1: pypdf, 1 réplica, sin control) | Después (PyMuPDF, 5 réplicas, backpressure, Markdown) |
 |---|---|---|
 | k6: throughput | 1,49 req/s | 5,88 req/s |
 | k6: tasa de error | 86,9 % | 1,1 % |
@@ -107,41 +115,46 @@ Con 5 réplicas de 1 CPU el techo teórico ronda los **23 req/s en texto plano**
 
 ### 6.2 Comparación con la cátedra (mediciones dentro de la red de Docker, 3 corridas)
 
-**Tabla A: prueba spike con k6 (100 usuarios, 40 s)**
+**Tabla A: prueba spike con k6 (100 usuarios, 40 s), con Markdown**
 
-| Métrica | Cátedra | Final (Markdown) | Final (`OUTPUT_FORMAT=text`) |
-|---|---|---|---|
-| Peticiones procesadas | 1.037 | 554 | 796 |
-| Throughput sostenido | 25,35 req/s | 12,95 req/s | 19,60 req/s |
-| Tasa de error | 0,00 % | 0,00 % | 0,00 % |
-| Latencia mediana (p50) | 1,88 s | 6,76 s | 4,57 s |
-| Latencia p90 | 7,83 s | 8,27 s | 5,51 s |
-| Latencia p95 | 8,80 s | 8,58 s | 5,71 s |
-| Latencia máxima | 13,94 s | 9,28 s | 6,37 s |
+| Métrica | Cátedra | Final (media de 3 corridas) |
+|---|---|---|
+| Peticiones procesadas | 1.037 | 544 |
+| Throughput sostenido | 25,35 req/s | 12,78 req/s (12,38 a 13,38) |
+| Tasa de error | 0,00 % | 0,00 % |
+| Latencia mediana (p50) | 1,88 s | 6,72 s |
+| Latencia p90 | 7,83 s | 8,53 s |
+| Latencia p95 | 8,80 s | 8,98 s |
+| Latencia máxima | 13,94 s | 9,83 s |
 
 **Tabla B: carga fija con Vegeta (50 req/s, 30 s, timeout de 30 s)**
 
-| Métrica | Cátedra | Final (Markdown) |
-|---|---|---|
-| Peticiones exitosas (200) | 998 / 1.500 (66,53 %) | 237 / 1.500 (15,8 %) |
-| Rechazos controlados (`503`) | no informa | ~1.260 (~84 %) |
-| Timeouts / error de conexión (código 0) | 501 (33,40 %) | ~4 (~0,3 %) |
-| Latencia mediana (p50) | 14,89 s | 20,05 s (corrida 1; coincide con el tope de espera en cola) |
+| Métrica | Cátedra | Final con Markdown | Final con `OUTPUT_FORMAT=text` |
+|---|---|---|---|
+| Peticiones exitosas (200) | 998 / 1.500 (66,53 %) | 407 / 1.500 (27,1 %; corridas: 20,6 / 29,3 / 31,5 %) | 640 / 1.500 (42,67 % en las 3 corridas) |
+| Throughput efectivo | 16,65 req/s | 7,73 req/s | 15,37 req/s |
+| Rechazos del rate limit (`429`) | no informa | 860 (57,3 %) | 860 (57,3 %) |
+| Rechazos de la cola (`503`) | no informa | 232 (15,5 %) | 0 |
+| Timeouts (código 0) | 501 (33,40 %) | 1 como máximo | 0 |
+| Latencia mediana (p50) | 14,89 s | ~11 ms | ~10 ms |
 
-Con texto plano, la tasa de éxito de Vegeta fue de ~19,5 % (Exp. 9, medida antes de incorporar Markdown).
+El p50 final está dominado por los `429` instantáneos, así que no mide cuánto tarda una respuesta exitosa.
 
 ---
 
 ## 7. Análisis y comparación con la cátedra
 
-No se superaron los valores de referencia de la cátedra ni en throughput ni en la tasa de éxito de Vegeta. En k6 se alcanzó el 77 % del throughput de la cátedra con texto plano (19,60 de 25,35 req/s) y el 51 % con Markdown (12,95 req/s). En compensación, se obtuvieron 0 % de error y latencias máximas menores (9,28 s contra 13,94 s).
+No se superaron los valores de referencia de la cátedra en throughput ni en tasa de éxito. Con Markdown se alcanzó el 50 % del throughput de k6 (12,78 de 25,35 req/s), con 0 % de error y una latencia máxima menor (9,83 s contra 13,94 s). En Vegeta se obtuvo un 27,1 % de éxito contra 66,53 %, pero casi sin timeouts (como máximo 1 contra 501).
 
-Se identifican dos efectos distintos:
+**Costo del Markdown.** La conversión propia cuesta más CPU que el texto plano (+40 % por PDF). En Vegeta, el texto plano llega a 15,37 req/s contra 7,73 req/s con Markdown, y atiende todo lo que admite el rate limit.
 
-1. **Costo del Markdown.** La conversión propia reduce el throughput un ~34 % respecto del texto plano (19,60 a 12,95 req/s), coherente con el +40 % de CPU medido por PDF. Explica la diferencia entre nuestras dos configuraciones, no la que queda con la cátedra.
-2. **Diferencia restante con la cátedra (texto plano, 19,60 contra 25,35 req/s).** No pudimos determinar su causa. Se desconocen el hardware y el sistema operativo de la medición de la cátedra, mientras que nosotros medimos en una sola PC con Windows y Docker Desktop, donde observamos que la capa de red costaba capacidad (11,7 contra 20,3 req/s para el mismo código). La ruta de archivos del script de la cátedra sugiere un entorno Linux, pero es una inferencia.
+**Rate limit.** Traefik rechaza al instante lo que supera 20 req/s (`429`) y deja libre la CPU. El límite admite 640 de 1.500 peticiones (20 req/s durante 30 s, más la ráfaga de 40); por eso los `429` son siempre 860. Con Markdown se atienden 407 de esas 640, cerca de las ~390 que permite una capacidad de 13 req/s durante 30 s. Antes del rate limit se lograban ~237: la diferencia sugiere que el tráfico en exceso consumía capacidad, aunque no se midió por separado.
 
-**Vegeta (modelo abierto).** Con una capacidad de ~13 req/s frente a 50 req/s inyectados, la mayor parte de las peticiones no puede atenderse. El servicio rechaza el exceso con `503` (~84 %) al agotarse la cola de 20 s, en lugar de dejarlo vencer por timeout (~0,3 %, frente al 33,4 % de la cátedra). Esa capacidad no explica todo el resultado: 13 req/s durante 30 s equivalen a unas 390 respuestas y se obtuvieron ~237. Esa brecha quedó sin explicar. Aun así, Vegeta cuenta el `503` como no exitoso, de modo que el rechazo controlado no mejora la tasa de éxito. Su valor es evitar el colapso: sin backpressure se observaron picos de ~870 MiB de memoria con un límite de 512 MiB y un 0 % de éxito.
+**Variación.** Vegeta con Markdown varió entre 20,6 % y 31,5 %. No se determinó la causa, por lo que el promedio debe leerse con cautela.
+
+**Texto plano con k6.** El límite de 20 req/s está ajustado a la configuración por defecto (Markdown). En texto plano la capacidad se acerca a ese límite y k6, que reintenta de inmediato al recibir `429`, dispara muchas peticiones rechazadas: 54 % a 83 % de error, con ~17,6 respuestas exitosas por segundo. Antes del rate limit, esa configuración dio 19,60 req/s con 0 % de error. Si se usara texto plano, habría que subir el límite.
+
+**Diferencia restante con la cátedra.** No pudimos determinar su causa. Se desconocen el hardware y el sistema operativo de la medición de la cátedra, mientras que nosotros medimos en una sola PC con Windows y Docker Desktop, donde la capa de red costaba capacidad (11,7 contra 20,3 req/s para el mismo código). La ruta de archivos del script de la cátedra sugiere un entorno Linux, pero es una inferencia.
 
 ---
 
@@ -150,7 +163,6 @@ Se identifican dos efectos distintos:
 - **Pruebas:** 64 pruebas automáticas en `services/extraction-service` (contrato HTTP, backpressure, configuración, Markdown, extracción), con ~94 % de cobertura de líneas.
 - **Refactor DRY / YAGNI / KISS:** se eliminó código repetido (construcción de errores HTTP, constantes de formato, validación duplicada de la firma `%PDF-`), código inalcanzable y reglas sin efecto medible (por ejemplo, la detección de subtítulos por nombre de fuente, que no cambiaba el resultado en los 4 PDFs oficiales). Funciones largas se dividieron en funciones pequeñas.
 - **Verificación de que no cambió el comportamiento:** se compararon los hashes SHA-256 de la salida (Markdown y texto plano) de los 4 PDFs oficiales antes y después: los 8 resultaron idénticos.
-- **Control de rendimiento posterior:** una corrida de k6 dentro de Docker dio 14,16 req/s, 0 % de error, p50 6,18 s y p95 7,92 s. Al ser una sola corrida, no se afirma una mejora respecto de 12,95 req/s.
 - **Comentarios:** se conservaron solo los que explican decisiones no evidentes (límite de hilos de PyMuPDF, bandera de lectura de texto, orden del semáforo, etc.).
 
 ---
@@ -164,7 +176,7 @@ Se identifican dos efectos distintos:
 4. **Markdown básico.** Detecta títulos por tamaño de fuente, viñetas y párrafos; no reconstruye tablas, y algunos PDFs no producen viñetas (por ejemplo, `scrum_manager_historias_usuario.pdf` dio 0). Las letras capitulares quedan como párrafos sueltos.
 5. **Requisito de Markdown.** Se consultó a la cátedra sobre si el Markdown era obligatorio y no hubo respuesta por escrito; por eso `OUTPUT_FORMAT` es configurable.
 6. **Licencia.** PyMuPDF se distribuye bajo AGPL-3.0 (o licencia comercial): aceptable en el ámbito académico, pero requiere evaluación para otros usos.
-7. **Medición y código final.** Las mediciones corresponden al commit `b3f9540`. Los cambios posteriores (cupo único, logs, memoria) no se midieron todavía con Vegeta.
+7. **Rate limit por cliente.** El límite se calcula por dirección IP y todas las peticiones de las pruebas salen de un mismo origen. Con varios clientes reales, el reparto sería distinto.
 
 **Trabajo futuro:** probar otro proxy (por ejemplo Caddy), mejorar la conversión a Markdown, repetir las mediciones en Linux nativo y reducir el costo por PDF.
 

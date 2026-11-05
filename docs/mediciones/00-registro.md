@@ -189,3 +189,11 @@
 - Salidas de los 4 PDFs oficiales idénticas por SHA-256 antes y después de separar las capas.
 - pymupdf se limita a la rama 1.x: la 2.1 agrega onnxruntime, numpy y pymupdf4llm sin necesidad.
 - Motor se reemplazó por PyMongo Async, porque quedó deprecado en mayo de 2026.
+
+## Exp. 19 - Medición final (commit 9a4bad8, 3 corridas, dentro de Docker)
+- k6 con Markdown: 13,38 / 12,38 / 12,59 req/s, 0 % de error, p50 6,72 s, p95 8,98 s, máx 9,83 s.
+- Vegeta con Markdown: 20,60 / 29,33 / 31,47 % de éxito; 429: 860; 503: 330 / 199 / 168; código 0: 1 / 1 / 0.
+- Vegeta con texto: 42,67 % en las 3 corridas (640/1500), 429: 860, sin 503 ni timeouts.
+- k6 con texto: 54,2 / 83,3 / 71,9 % de error por 429, con ~17,6 respuestas exitosas por segundo.
+  El límite de 20 req/s está ajustado a Markdown, que es la configuración por defecto.
+- Conclusión: no se supera a la cátedra; se eliminan casi todos los timeouts y el error en k6 es 0 %.
