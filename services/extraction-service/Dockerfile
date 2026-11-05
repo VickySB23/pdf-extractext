@@ -1,15 +1,22 @@
-FROM python:3.12-slim-bookworm
-COPY --from=ghcr.io/astral-sh/uv:0.11.14 /uv /uvx /bin/
+FROM python:3.12-slim-trixie AS builder
+COPY --from=ghcr.io/astral-sh/uv:0.11.14 /uv /bin/
 
 WORKDIR /app
-ENV PYTHONUNBUFFERED=1 UV_COMPILE_BYTECODE=1
+ENV UV_COMPILE_BYTECODE=1
 
 COPY pyproject.toml uv.lock ./
-RUN uv sync --frozen --no-dev
+RUN uv sync --frozen --no-install-project --no-dev
 
+FROM python:3.12-slim-trixie
+
+WORKDIR /app
+ENV PYTHONUNBUFFERED=1
+
+COPY --from=builder /app/.venv ./.venv
 COPY app ./app
 
-RUN useradd --system --uid 10001 --no-create-home app
+# La imagen final no instala paquetes: pip solo sumaría superficie de ataque.
+RUN pip uninstall -y pip && useradd --system --uid 10001 --no-create-home app
 USER app
 
 EXPOSE 8001
