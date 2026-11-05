@@ -1,0 +1,164 @@
+﻿18:12:45
+CONTAINER ID   NAME                            CPU %     MEM USAGE / LIMIT     MEM %     NET I/O           BLOCK I/O       PIDS
+b871b1762ed4   medicion-document-service-1     0.84%     50.02MiB / 512MiB     9.77%     64kB / 54.4kB     0B / 0B         5
+d4278c544bc6   medicion-extraction-service-2   65.38%    82.19MiB / 512MiB     16.05%    18.6MB / 66.8kB   0B / 0B         6
+15db17734da7   medicion-traefik-1              93.51%    117.1MiB / 1GiB       11.43%    6.1GB / 6.02GB    225kB / 0B      10
+3d9de2ad7d13   medicion-extraction-service-4   96.04%    95.12MiB / 512MiB     18.58%    24MB / 176kB      0B / 0B         7
+ddc38eeea1f4   medicion-extraction-service-5   60.17%    82.54MiB / 512MiB     16.12%    18.8MB / 37.8kB   0B / 0B         6
+39959b78d982   medicion-extraction-service-1   62.91%    75.65MiB / 512MiB     14.78%    16.4MB / 123kB    0B / 0B         6
+3ecf8e1b5ec5   medicion-extraction-service-3   93.94%    97.62MiB / 512MiB     19.07%    36.2MB / 267kB    0B / 0B         6
+b3cfd42284a2   medicion-db-1                   99.01%    199.6MiB / 512MiB     38.98%    29.3kB / 28kB     4.1kB / 1.7MB   45
+beb9893a9044   medicion-consul-1               28.28%    46.1MiB / 256MiB      18.01%    246kB / 379kB     455kB / 934kB   16
+418786b1daf2   xenodochial_franklin            174.49%   28.36MiB / 9.402GiB   0.29%     1.94MB / 278MB    0B / 0B         20
+18:12:51
+CONTAINER ID   NAME                            CPU %     MEM USAGE / LIMIT     MEM %     NET I/O           BLOCK I/O        PIDS
+418786b1daf2   xenodochial_franklin            101.42%   44.51MiB / 9.402GiB   0.46%     9.35MB / 757MB    0B / 0B          20
+b871b1762ed4   medicion-document-service-1     0.49%     50.02MiB / 512MiB     9.77%     65.5kB / 55.7kB   0B / 0B          5
+d4278c544bc6   medicion-extraction-service-2   104.79%   150.9MiB / 512MiB     29.47%    129MB / 1.39MB    0B / 0B          7
+15db17734da7   medicion-traefik-1              68.53%    161.6MiB / 1GiB       15.78%    6.58GB / 6.43GB   225kB / 0B       10
+3d9de2ad7d13   medicion-extraction-service-4   102.43%   151.4MiB / 512MiB     29.58%    102MB / 1.32MB    0B / 0B          12
+ddc38eeea1f4   medicion-extraction-service-5   98.94%    166.4MiB / 512MiB     32.50%    142MB / 1.37MB    0B / 0B          12
+39959b78d982   medicion-extraction-service-1   103.59%   155.3MiB / 512MiB     30.33%    120MB / 1.31MB    0B / 0B          7
+3ecf8e1b5ec5   medicion-extraction-service-3   94.50%    138.8MiB / 512MiB     27.12%    111MB / 1.35MB    0B / 0B          6
+b3cfd42284a2   medicion-db-1                   1.62%     74.64MiB / 512MiB     14.58%    30kB / 29kB       4.1kB / 1.75MB   39
+beb9893a9044   medicion-consul-1               2.23%     33.8MiB / 256MiB      13.20%    250kB / 387kB     455kB / 934kB    9
+18:12:57
+CONTAINER ID   NAME                            CPU %     MEM USAGE / LIMIT     MEM %     NET I/O           BLOCK I/O        PIDS
+418786b1daf2   xenodochial_franklin            86.97%    59.56MiB / 9.402GiB   0.62%     15.9MB / 1.2GB    0B / 0B          20
+b871b1762ed4   medicion-document-service-1     0.44%     50.02MiB / 512MiB     9.77%     67kB / 57kB       0B / 0B          5
+d4278c544bc6   medicion-extraction-service-2   101.65%   174MiB / 512MiB       33.98%    200MB / 2.33MB    0B / 0B          6
+15db17734da7   medicion-traefik-1              80.71%    244.6MiB / 1GiB       23.88%    7.03GB / 6.78GB   225kB / 0B       10
+3d9de2ad7d13   medicion-extraction-service-4   106.74%   179.7MiB / 512MiB     35.11%    165MB / 2.31MB    0B / 0B          7
+ddc38eeea1f4   medicion-extraction-service-5   103.71%   167MiB / 512MiB       32.62%    193MB / 2.43MB    0B / 0B          7
+39959b78d982   medicion-extraction-service-1   105.96%   173.4MiB / 512MiB     33.86%    191MB / 2.5MB     0B / 0B          7
+3ecf8e1b5ec5   medicion-extraction-service-3   102.45%   192.9MiB / 512MiB     37.67%    189MB / 2.37MB    0B / 0B          6
+b3cfd42284a2   medicion-db-1                   0.89%     74.64MiB / 512MiB     14.58%    30.7kB / 30kB     4.1kB / 1.75MB   39
+beb9893a9044   medicion-consul-1               0.86%     33.85MiB / 256MiB     13.22%    254kB / 395kB     455kB / 938kB    9
+18:13:03
+CONTAINER ID   NAME                            CPU %     MEM USAGE / LIMIT     MEM %     NET I/O           BLOCK I/O        PIDS
+418786b1daf2   xenodochial_franklin            66.25%    93.25MiB / 9.402GiB   0.97%     24.2MB / 1.43GB   69.6kB / 0B      20
+b871b1762ed4   medicion-document-service-1     0.28%     50.02MiB / 512MiB     9.77%     67.9kB / 58kB     0B / 0B          5
+d4278c544bc6   medicion-extraction-service-2   96.46%    165.1MiB / 512MiB     32.25%    241MB / 4.05MB    0B / 0B          6
+15db17734da7   medicion-traefik-1              78.08%    290.6MiB / 1GiB       28.38%    7.27GB / 6.96GB   225kB / 0B       10
+3d9de2ad7d13   medicion-extraction-service-4   100.50%   178.1MiB / 512MiB     34.78%    205MB / 3.88MB    0B / 0B          7
+ddc38eeea1f4   medicion-extraction-service-5   96.34%    152MiB / 512MiB       29.69%    231MB / 4.1MB     0B / 0B          7
+39959b78d982   medicion-extraction-service-1   102.82%   160.1MiB / 512MiB     31.28%    219MB / 3.71MB    0B / 0B          6
+3ecf8e1b5ec5   medicion-extraction-service-3   107.11%   178.1MiB / 512MiB     34.78%    217MB / 3.81MB    0B / 0B          12
+b3cfd42284a2   medicion-db-1                   43.80%    74.65MiB / 512MiB     14.58%    31.1kB / 30.2kB   4.1kB / 1.81MB   39
+beb9893a9044   medicion-consul-1               30.96%    34.09MiB / 256MiB     13.31%    260kB / 404kB     455kB / 938kB    9
+18:13:09
+CONTAINER ID   NAME                            CPU %     MEM USAGE / LIMIT     MEM %     NET I/O           BLOCK I/O        PIDS
+418786b1daf2   xenodochial_franklin            65.97%    119.8MiB / 9.402GiB   1.24%     32MB / 1.63GB     69.6kB / 0B      20
+b871b1762ed4   medicion-document-service-1     0.36%     50.02MiB / 512MiB     9.77%     69.5kB / 59.3kB   0B / 0B          5
+d4278c544bc6   medicion-extraction-service-2   89.28%    149.4MiB / 512MiB     29.18%    268MB / 5.45MB    0B / 0B          6
+15db17734da7   medicion-traefik-1              85.14%    302.2MiB / 1GiB       29.51%    7.45GB / 7.11GB   225kB / 0B       11
+3d9de2ad7d13   medicion-extraction-service-4   105.86%   157.9MiB / 512MiB     30.83%    242MB / 5.58MB    0B / 0B          6
+ddc38eeea1f4   medicion-extraction-service-5   105.74%   148.8MiB / 512MiB     29.07%    262MB / 5.55MB    0B / 0B          7
+39959b78d982   medicion-extraction-service-1   92.22%    146.2MiB / 512MiB     28.56%    257MB / 5.27MB    0B / 0B          6
+3ecf8e1b5ec5   medicion-extraction-service-3   26.30%    172.5MiB / 512MiB     33.69%    250MB / 5.18MB    0B / 0B          7
+b3cfd42284a2   medicion-db-1                   99.94%    223.9MiB / 512MiB     43.73%    31.8kB / 31.1kB   4.1kB / 1.86MB   51
+beb9893a9044   medicion-consul-1               17.49%    45.81MiB / 256MiB     17.89%    265kB / 412kB     455kB / 938kB    16
+18:13:15
+CONTAINER ID   NAME                            CPU %     MEM USAGE / LIMIT     MEM %     NET I/O           BLOCK I/O        PIDS
+418786b1daf2   xenodochial_franklin            0.65%     132.8MiB / 9.402GiB   1.38%     37.2MB / 1.75GB   69.6kB / 0B      20
+b871b1762ed4   medicion-document-service-1     0.61%     50.02MiB / 512MiB     9.77%     71kB / 61.1kB     0B / 0B          5
+d4278c544bc6   medicion-extraction-service-2   1.59%     142.1MiB / 512MiB     27.76%    276MB / 6.05MB    0B / 0B          6
+15db17734da7   medicion-traefik-1              1.41%     333.7MiB / 1GiB       32.59%    7.61GB / 7.22GB   225kB / 0B       11
+3d9de2ad7d13   medicion-extraction-service-4   22.99%    147.7MiB / 512MiB     28.84%    271MB / 6.87MB    0B / 0B          6
+ddc38eeea1f4   medicion-extraction-service-5   0.34%     136.8MiB / 512MiB     26.72%    273MB / 6.18MB    0B / 0B          6
+39959b78d982   medicion-extraction-service-1   16.04%    144MiB / 512MiB       28.12%    278MB / 6.33MB    0B / 0B          6
+3ecf8e1b5ec5   medicion-extraction-service-3   94.58%    149.4MiB / 512MiB     29.17%    264MB / 5.98MB    0B / 0B          6
+b3cfd42284a2   medicion-db-1                   7.32%     78.51MiB / 512MiB     15.33%    32.5kB / 31.5kB   4.1kB / 1.88MB   45
+beb9893a9044   medicion-consul-1               2.38%     34.96MiB / 256MiB     13.66%    271kB / 426kB     455kB / 938kB    9
+18:13:21
+CONTAINER ID   NAME                            CPU %     MEM USAGE / LIMIT     MEM %     NET I/O           BLOCK I/O        PIDS
+418786b1daf2   xenodochial_franklin            6.90%     120.8MiB / 9.402GiB   1.25%     37.7MB / 1.76GB   69.6kB / 0B      20
+b871b1762ed4   medicion-document-service-1     0.65%     50.02MiB / 512MiB     9.77%     72.5kB / 62.3kB   0B / 0B          5
+d4278c544bc6   medicion-extraction-service-2   1.58%     130.4MiB / 512MiB     25.48%    284MB / 6.2MB     0B / 0B          6
+15db17734da7   medicion-traefik-1              7.71%     292.7MiB / 1GiB       28.58%    7.62GB / 7.25GB   225kB / 0B       11
+3d9de2ad7d13   medicion-extraction-service-4   18.63%    133.5MiB / 512MiB     26.07%    275MB / 6.9MB     0B / 0B          6
+ddc38eeea1f4   medicion-extraction-service-5   24.07%    127.2MiB / 512MiB     24.84%    275MB / 6.2MB     0B / 0B          6
+39959b78d982   medicion-extraction-service-1   0.53%     132.2MiB / 512MiB     25.82%    278MB / 6.35MB    0B / 0B          6
+3ecf8e1b5ec5   medicion-extraction-service-3   23.31%    124.1MiB / 512MiB     24.24%    275MB / 6.61MB    0B / 0B          6
+b3cfd42284a2   medicion-db-1                   0.81%     74.66MiB / 512MiB     14.58%    33.2kB / 32.4kB   4.1kB / 1.92MB   39
+beb9893a9044   medicion-consul-1               2.25%     35MiB / 256MiB        13.67%    275kB / 434kB     455kB / 942kB    9
+18:13:26
+CONTAINER ID   NAME                            CPU %     MEM USAGE / LIMIT     MEM %     NET I/O           BLOCK I/O        PIDS
+418786b1daf2   xenodochial_franklin            21.20%    116.7MiB / 9.402GiB   1.21%     38.9MB / 1.92GB   69.6kB / 0B      20
+b871b1762ed4   medicion-document-service-1     0.53%     50.02MiB / 512MiB     9.77%     74kB / 63.6kB     0B / 0B          5
+d4278c544bc6   medicion-extraction-service-2   1.77%     121MiB / 512MiB       23.64%    304MB / 6.43MB    0B / 0B          6
+15db17734da7   medicion-traefik-1              13.73%    254.9MiB / 1GiB       24.89%    7.78GB / 7.41GB   225kB / 0B       11
+3d9de2ad7d13   medicion-extraction-service-4   3.38%     145.1MiB / 512MiB     28.34%    329MB / 7.07MB    0B / 0B          6
+ddc38eeea1f4   medicion-extraction-service-5   13.03%    128.6MiB / 512MiB     25.13%    301MB / 6.44MB    0B / 0B          6
+39959b78d982   medicion-extraction-service-1   1.80%     138.6MiB / 512MiB     27.07%    313MB / 6.58MB    0B / 0B          6
+3ecf8e1b5ec5   medicion-extraction-service-3   0.84%     120.4MiB / 512MiB     23.52%    299MB / 6.8MB     0B / 0B          6
+b3cfd42284a2   medicion-db-1                   0.95%     74.66MiB / 512MiB     14.58%    33.9kB / 33.4kB   4.1kB / 1.93MB   39
+beb9893a9044   medicion-consul-1               2.96%     35MiB / 256MiB        13.67%    279kB / 441kB     455kB / 942kB    9
+18:13:32
+CONTAINER ID   NAME                            CPU %     MEM USAGE / LIMIT   MEM %     NET I/O           BLOCK I/O       PIDS
+418786b1daf2   xenodochial_franklin            8.06%     72MiB / 9.402GiB    0.75%     39MB / 1.97GB     69.6kB / 0B     20
+b871b1762ed4   medicion-document-service-1     0.31%     50.02MiB / 512MiB   9.77%     74.8kB / 64.7kB   0B / 0B         5
+d4278c544bc6   medicion-extraction-service-2   4.63%     105MiB / 512MiB     20.50%    340MB / 6.53MB    0B / 0B         6
+15db17734da7   medicion-traefik-1              13.05%    130.3MiB / 1GiB     12.73%    7.83GB / 7.56GB   225kB / 0B      11
+3d9de2ad7d13   medicion-extraction-service-4   2.55%     106.5MiB / 512MiB   20.79%    363MB / 7.17MB    0B / 0B         6
+ddc38eeea1f4   medicion-extraction-service-5   21.35%    100.7MiB / 512MiB   19.67%    342MB / 6.56MB    0B / 0B         6
+39959b78d982   medicion-extraction-service-1   1.82%     111.5MiB / 512MiB   21.78%    337MB / 6.69MB    0B / 0B         6
+3ecf8e1b5ec5   medicion-extraction-service-3   37.82%    110.1MiB / 512MiB   21.51%    322MB / 6.9MB     0B / 0B         6
+b3cfd42284a2   medicion-db-1                   0.77%     74.68MiB / 512MiB   14.59%    34.3kB / 33.6kB   4.1kB / 2MB     39
+beb9893a9044   medicion-consul-1               1.16%     35MiB / 256MiB      13.67%    283kB / 449kB     455kB / 942kB   9
+18:13:37
+CONTAINER ID   NAME                            CPU %     MEM USAGE / LIMIT     MEM %     NET I/O           BLOCK I/O       PIDS
+418786b1daf2   xenodochial_franklin            0.11%     49.11MiB / 9.402GiB   0.51%     40.2MB / 2.01GB   69.6kB / 0B     20
+b871b1762ed4   medicion-document-service-1     0.53%     50.02MiB / 512MiB     9.77%     76.4kB / 66kB     0B / 0B         5
+d4278c544bc6   medicion-extraction-service-2   0.22%     101MiB / 512MiB       19.72%    369MB / 6.85MB    0B / 0B         6
+15db17734da7   medicion-traefik-1              0.97%     75.87MiB / 1GiB       7.41%     7.87GB / 7.65GB   225kB / 0B      11
+3d9de2ad7d13   medicion-extraction-service-4   0.21%     101.9MiB / 512MiB     19.91%    372MB / 7.22MB    0B / 0B         6
+ddc38eeea1f4   medicion-extraction-service-5   25.50%    98.79MiB / 512MiB     19.29%    354MB / 6.73MB    0B / 0B         6
+39959b78d982   medicion-extraction-service-1   0.35%     102.1MiB / 512MiB     19.94%    364MB / 7.14MB    0B / 0B         6
+3ecf8e1b5ec5   medicion-extraction-service-3   0.48%     101.1MiB / 512MiB     19.75%    331MB / 7.19MB    0B / 0B         6
+b3cfd42284a2   medicion-db-1                   54.98%    74.88MiB / 512MiB     14.62%    35kB / 34.6kB     4.1kB / 2MB     39
+beb9893a9044   medicion-consul-1               1.95%     35.03MiB / 256MiB     13.68%    289kB / 458kB     455kB / 942kB   9
+18:13:43
+CONTAINER ID   NAME                            CPU %     MEM USAGE / LIMIT   MEM %     NET I/O           BLOCK I/O        PIDS
+b871b1762ed4   medicion-document-service-1     0.36%     50.02MiB / 512MiB   9.77%     77.1kB / 67kB     0B / 0B          5
+d4278c544bc6   medicion-extraction-service-2   0.17%     101MiB / 512MiB     19.72%    370MB / 6.86MB    0B / 0B          6
+15db17734da7   medicion-traefik-1              0.10%     70.68MiB / 1GiB     6.90%     7.87GB / 7.66GB   225kB / 0B       11
+3d9de2ad7d13   medicion-extraction-service-4   0.23%     101.9MiB / 512MiB   19.91%    374MB / 7.24MB    0B / 0B          6
+ddc38eeea1f4   medicion-extraction-service-5   0.17%     98.76MiB / 512MiB   19.29%    355MB / 6.74MB    0B / 0B          6
+39959b78d982   medicion-extraction-service-1   0.19%     102.1MiB / 512MiB   19.94%    365MB / 7.14MB    0B / 0B          6
+3ecf8e1b5ec5   medicion-extraction-service-3   0.19%     101.1MiB / 512MiB   19.75%    333MB / 7.3MB     0B / 0B          6
+b3cfd42284a2   medicion-db-1                   100.74%   232.1MiB / 512MiB   45.34%    35.5kB / 34.8kB   135kB / 2.19MB   52
+beb9893a9044   medicion-consul-1               1.63%     35.29MiB / 256MiB   13.79%    293kB / 466kB     455kB / 954kB    9
+18:13:49
+CONTAINER ID   NAME                            CPU %     MEM USAGE / LIMIT   MEM %     NET I/O           BLOCK I/O        PIDS
+b871b1762ed4   medicion-document-service-1     0.31%     50.02MiB / 512MiB   9.77%     78.7kB / 68.2kB   0B / 0B          5
+d4278c544bc6   medicion-extraction-service-2   0.21%     101MiB / 512MiB     19.72%    370MB / 6.86MB    0B / 0B          6
+15db17734da7   medicion-traefik-1              0.00%     70.68MiB / 1GiB     6.90%     7.87GB / 7.66GB   225kB / 0B       11
+3d9de2ad7d13   medicion-extraction-service-4   0.35%     101.9MiB / 512MiB   19.91%    374MB / 7.24MB    0B / 0B          6
+ddc38eeea1f4   medicion-extraction-service-5   0.23%     98.76MiB / 512MiB   19.29%    355MB / 6.74MB    0B / 0B          6
+39959b78d982   medicion-extraction-service-1   0.18%     102.1MiB / 512MiB   19.94%    365MB / 7.14MB    0B / 0B          6
+3ecf8e1b5ec5   medicion-extraction-service-3   0.19%     101.1MiB / 512MiB   19.75%    333MB / 7.3MB     0B / 0B          6
+b3cfd42284a2   medicion-db-1                   52.91%    220.4MiB / 512MiB   43.04%    36.2kB / 35.7kB   135kB / 2.19MB   50
+beb9893a9044   medicion-consul-1               20.13%    35.05MiB / 256MiB   13.69%    298kB / 474kB     586kB / 954kB    9
+18:13:55
+CONTAINER ID   NAME                            CPU %     MEM USAGE / LIMIT   MEM %     NET I/O           BLOCK I/O       PIDS
+b871b1762ed4   medicion-document-service-1     0.65%     50.02MiB / 512MiB   9.77%     80.1kB / 70kB     0B / 0B         5
+d4278c544bc6   medicion-extraction-service-2   0.21%     101MiB / 512MiB     19.72%    370MB / 6.86MB    0B / 0B         6
+15db17734da7   medicion-traefik-1              0.56%     70.68MiB / 1GiB     6.90%     7.87GB / 7.66GB   225kB / 0B      11
+3d9de2ad7d13   medicion-extraction-service-4   0.24%     101.9MiB / 512MiB   19.91%    374MB / 7.24MB    0B / 0B         6
+ddc38eeea1f4   medicion-extraction-service-5   0.46%     98.76MiB / 512MiB   19.29%    355MB / 6.74MB    0B / 0B         6
+39959b78d982   medicion-extraction-service-1   0.24%     102.1MiB / 512MiB   19.94%    365MB / 7.14MB    0B / 0B         6
+3ecf8e1b5ec5   medicion-extraction-service-3   0.22%     101.1MiB / 512MiB   19.75%    333MB / 7.3MB     0B / 0B         6
+b3cfd42284a2   medicion-db-1                   0.85%     75.22MiB / 512MiB   14.69%    36.9kB / 36kB     135kB / 2.2MB   39
+beb9893a9044   medicion-consul-1               2.43%     35.05MiB / 256MiB   13.69%    304kB / 488kB     586kB / 954kB   9
+18:14:01
+CONTAINER ID   NAME                            CPU %     MEM USAGE / LIMIT   MEM %     NET I/O           BLOCK I/O        PIDS
+b871b1762ed4   medicion-document-service-1     0.65%     50.02MiB / 512MiB   9.77%     82.8kB / 71.4kB   0B / 0B          5
+d4278c544bc6   medicion-extraction-service-2   0.19%     101MiB / 512MiB     19.72%    370MB / 6.86MB    0B / 0B          6
+15db17734da7   medicion-traefik-1              0.53%     70.68MiB / 1GiB     6.90%     7.87GB / 7.66GB   225kB / 0B       11
+3d9de2ad7d13   medicion-extraction-service-4   0.22%     102MiB / 512MiB     19.91%    374MB / 7.24MB    0B / 0B          6
+ddc38eeea1f4   medicion-extraction-service-5   0.43%     98.76MiB / 512MiB   19.29%    355MB / 6.75MB    0B / 0B          6
+39959b78d982   medicion-extraction-service-1   0.18%     102.1MiB / 512MiB   19.94%    365MB / 7.15MB    0B / 0B          6
+3ecf8e1b5ec5   medicion-extraction-service-3   0.18%     101.1MiB / 512MiB   19.75%    333MB / 7.3MB     0B / 0B          6
+b3cfd42284a2   medicion-db-1                   0.82%     75.22MiB / 512MiB   14.69%    37.6kB / 37kB     135kB / 2.26MB   39
+beb9893a9044   medicion-consul-1               2.45%     35.34MiB / 256MiB   13.80%    309kB / 495kB     586kB / 954kB    9

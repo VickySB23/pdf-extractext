@@ -1,0 +1,1 @@
+extraction-service-3  | 2026-11-05 21:08:50,481 INFO extraction-service Configuración: QUEUE_TIMEOUT_SECONDS=20 MAX_UPLOAD_SIZE_BYTES=10485760 RETRY_
