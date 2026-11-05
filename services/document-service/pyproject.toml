@@ -1,6 +1,6 @@
 [project]
 name = "document-service"
-version = "0.1.0"
+version = "1.0.0"
 description = "API de documentos: recibe PDFs, delega la extracción y persiste en MongoDB"
 requires-python = ">=3.11"
 dependencies = [

@@ -70,7 +70,7 @@ logger.info(
 _CUPO = asyncio.Semaphore(1)
 
 
-app = FastAPI(title="extraction-service", version="0.1.0")
+app = FastAPI(title="extraction-service", version="1.0.0")
 
 
 class ExtractResponse(BaseModel):
