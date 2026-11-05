@@ -29,8 +29,8 @@ Traefik :8080
 - `docker-compose.yml` publica Traefik en `8080:80` y enruta `/extract` y `/health`.
 - Traefik balancea con estrategia `p2c`, según la etiqueta actual del compose.
 - La extracción usa PyMuPDF por su mejor rendimiento frente a `pypdf`.
-- El backpressure se implementa con semáforo, `503` y header `Retry-After`.
-- El semáforo se adquiere antes de leer el cuerpo para no retener PDFs en memoria.
+- El backpressure se implementa con un cupo por réplica, `503` y header `Retry-After`.
+- El cupo se adquiere antes de leer el cuerpo para no retener PDFs en memoria.
 - El Markdown es una conversión propia y liviana: títulos, viñetas y párrafos.
 - La configuración entra por variables de entorno y los logs salen por stdout.
 - La imagen ejecuta el servicio con un usuario sin privilegios.
@@ -59,16 +59,16 @@ Se muestra abreviada.
 
 ## 5. Configuración
 Estas son las variables que lee `services/extraction-service/app/main.py`.
-El compose inyecta las cuatro de concurrencia/formato y deja el tamaño máximo con su default.
+El compose inyecta las de cola y formato, y deja el tamaño máximo con su default.
 | Variable | Default | Uso |
 | --- | --- | --- |
 | `MAX_UPLOAD_SIZE_BYTES` | `10485760` | Tamaño máximo aceptado para el PDF. |
-| `MAX_CONCURRENT` | `1` | Cantidad de extracciones simultáneas por réplica. |
 | `QUEUE_TIMEOUT_SECONDS` | `20` | Tiempo máximo de espera antes de responder `503`. |
 | `RETRY_AFTER_SECONDS` | `1` | Valor del header `Retry-After` ante saturación. |
 | `OUTPUT_FORMAT` | `markdown` | Formato de salida: `markdown` o `text`. |
 
-El puerto interno del contenedor es `8001`; Traefik lo expone hacia el host en `8080`.
+El puerto interno del contenedor es fijo: `8001`. Traefik lo expone hacia el host en `8080`.
+Cada réplica atiende una extracción por vez, porque PyMuPDF no admite hilos concurrentes.
 
 ## 6. Pruebas de carga
 k6, desde la raíz del repositorio:
@@ -115,7 +115,7 @@ Esta sección documenta el stack de la primera etapa, conservado en `docker-comp
 
 ### 9.1 Descripción y arquitectura
 
-La primera etapa expone una API REST para subir PDFs, extraer texto nativo, calcular un checksum SHA-256 del texto, rechazar documentos duplicados y persistir los resultados en MongoDB. Incluye operaciones CRUD sobre documentos y un endpoint de salud. El alta valida la extensión `.pdf`, que el archivo no esté vacío, el tamaño máximo de 10 MB y la firma `%PDF-`.
+La primera etapa expone una API REST para subir PDFs, delegar la extracción en `extraction-service`, calcular un checksum SHA-256 del archivo, rechazar documentos duplicados y persistir los resultados en MongoDB. Incluye operaciones CRUD sobre documentos y un endpoint de salud. El router valida la extensión `.pdf`; `extraction-service` valida el archivo vacío, el tamaño máximo de 10 MB y la firma `%PDF-`. El PDF se procesa en memoria, sin archivos temporales.
 
 ```text
 Cliente
@@ -136,15 +136,15 @@ MongoDB :27017          extraction-service :8001
 - Solo `document-service` está conectado a las dos redes.
 - `extraction-service` y MongoDB no publican puertos al host.
 - `document-service` espera el healthcheck de `extraction-service` antes de arrancar.
-- En esta etapa, `document-service` extrae el texto localmente con `pypdf`. El cliente HTTP hacia `extraction-service` existe, pero todavía no está cableado.
+- `document-service` envía cada PDF a `extraction-service` como cuerpo binario y guarda el Markdown devuelto.
 
 ### 9.2 Servicios
 
 | Servicio | Imagen / build | Puerto | Red | Función |
 | --- | --- | --- | --- | --- |
 | `traefik` | `traefik:v3.6` | `80` público; `8080` dashboard | `traefik-net` | Punto de entrada HTTP y ruteo. |
-| `document-service` | `./services/document-service` | `8000` interno | `traefik-net`, `backend` | API de documentos, extracción local y persistencia. |
-| `extraction-service` | `./services/extraction-service` | `8001` interno | `backend` | Servicio de extracción; el compose espera su healthcheck. |
+| `document-service` | `./services/document-service` | `8000` interno | `traefik-net`, `backend` | API de documentos y persistencia. |
+| `extraction-service` | `./services/extraction-service` | `8001` interno | `backend` | Extrae el texto; el compose espera su healthcheck. |
 | `db` | `mongo:7.0` | `27017` interno | `backend` | Persistencia en el volumen `mongo_data`. |
 
 El dashboard de Traefik queda en `http://localhost:8080` y no es la API de documentos.
@@ -165,7 +165,7 @@ Desde la raíz del repositorio:
 docker compose -f docker-compose.full.yml up --build -d
 ```
 
-El primer build puede tardar unos minutos. `document-service` puede tardar unos segundos más en quedar listo porque su imagen arranca con `uv run`.
+El primer build puede tardar unos minutos.
 
 ### 9.4 Estado, logs y health
 
@@ -237,13 +237,11 @@ La validación fue manual; no se ejecutó una suite automatizada específica par
 
 ### 9.8 Limitaciones y tareas pendientes
 
-- `document-service` todavía extrae texto con `pypdf` local. `extraction-service` está en el stack y se healthcheckea, pero no recibe tráfico de `document-service`; el cliente HTTP y el circuit breaker existen pero no están cableados.
-- No hay índices en MongoDB. La detección de duplicados por checksum puede sufrir una condición de carrera con cargas concurrentes.
-- `PUT /api/documents/{id}` actualiza `full_text` sin recalcular el checksum.
+- `PUT /api/documents/{id}` actualiza `full_text`; el checksum sigue identificando el archivo original.
 - El listado devuelve como máximo 100 documentos y no tiene paginación.
 - No hay autenticación, autorización, OCR ni frontend. Los PDFs no se guardan; solo se persiste el texto extraído.
 - El gateway solo publica `/api/documents` y `/health`; la documentación interactiva (`/docs`) no está expuesta.
-- `document-service` no tiene healthcheck en el compose y tarda unos segundos en iniciar porque su imagen ejecuta `uv run`, que instala dependencias de desarrollo al arrancar.
+- `document-service` no tiene healthcheck en el compose.
 - La etiqueta `traefik.docker.network=pdf-extractext_traefik-net` usa el nombre de red que genera Compose para el proyecto `pdf-extractext`. Si el directorio o el nombre del proyecto cambian, hay que ajustar la etiqueta o definir `COMPOSE_PROJECT_NAME=pdf-extractext`.
 
 ### 9.9 Enlaces

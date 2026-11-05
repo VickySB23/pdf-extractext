@@ -1,7 +1,7 @@
 # Registro de experimentos
 
 ## Exp. 1 - Baseline: pypdf, 1 réplica, sin backpressure (2026-10-05)
-- Configuración: docker-compose.bench.yml, 1 réplica sin límites de recursos.
+- Configuración: compose de benchmark de ese momento, 1 réplica sin límites de recursos.
 - k6 spike: 99 peticiones, 1,49 req/s, 86,9 % error, p50 50,5 s, p95 60 s.
 - Vegeta 50 req/s (repetido con el servicio healthy): 0 % éxito
   (1.500 timeouts), p50 30 s.
@@ -111,18 +111,9 @@
 
   
 ## Exp. 8 - Round robin vs p2c, k6 dentro de la red Docker, 3 corridas cada uno
-- Round robin: 19,95 y 19,87 req/s (corrida 1: completar desde 09-wrr-run1-k6.json).
-- p2c: 21,33 / 19,55 / 19,99 req/s (media 20,29).
-- 0 % de error en todas; p95 entre 5,16 y 6,60 s.
-- Variación entre corridas de una misma configuración: hasta ~9 %, mayor que la
-  diferencia entre configuraciones.
-- Conclusión: sin evidencia de mejora con p2c; se mantiene round robin (por defecto).
-
-
-## Exp. 8 (completo) - Round robin vs p2c, k6 dentro de la red Docker, 3 corridas cada uno
 - Round robin: 21,09 / 19,95 / 19,87 req/s (media 20,30).
 - p2c: 21,33 / 19,55 / 19,99 req/s (media 20,29).
-- Conclusión: sin diferencia; se mantiene round robin.
+- Conclusión: sin diferencia. El compose quedó con p2c, incluida la medición final.
 
 ## Exp. 9 - Vegeta dentro de la red Docker (5 réplicas, MAX_CONCURRENT=1), 3 corridas
 - Éxito: 18,73 % / 20,47 % / 19,40 % (281 / 307 / 291 respuestas 200 de 1500); 503: ~1200;
@@ -168,3 +159,8 @@
 - Control de k6 dentro de Docker (una corrida, 30-post-refactor-run1-k6.json): 599 peticiones,
   14,16 req/s, 0 % de error, p50 6,18 s, p95 7,92 s, máx 9,22 s. Una corrida no alcanza para
   afirmar mejora respecto de 12,95 req/s.
+
+## Nota posterior - MAX_CONCURRENT (Exp. 4 y 10)
+- El candado global de PyMuPDF serializaba la extracción dentro de cada proceso, así que
+  esos experimentos no podían mostrar paralelismo. La variable y el candado se eliminaron:
+  ahora hay un cupo fijo de una extracción por réplica.
