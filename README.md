@@ -1,4 +1,4 @@
-# PDF Extract — Test de carga, estrés y optimización de microservicio (Parte 2)
+# PDF Extract — Test de carga, estrés y optimización de microservicio
 
 Trabajo práctico universitario de Desarrollo de Software.
 Universidad Tecnológica Nacional, Facultad Regional San Rafael, Ingeniería en Sistemas.
