@@ -1,6 +1,5 @@
 """
-Contratos de persistencia y entidades de dominio.
-Cumple estrictamente con el requerimiento de guardar el texto y el checksum.
+Contratos de persistencia y entidad de dominio.
 """
 from dataclasses import dataclass
 from datetime import datetime
@@ -9,7 +8,7 @@ from uuid import UUID
 
 @dataclass
 class DocumentRecord:
-    """Entidad principal: Representa el texto extraído del PDF y su checksum."""
+    """Entidad principal: texto extraído del PDF y checksum del archivo."""
     id: UUID
     original_filename: str
     full_text: str

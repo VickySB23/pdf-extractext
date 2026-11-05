@@ -56,7 +56,7 @@ class DocumentService:
         return await self._repository.get_by_id(doc_id)
 
     async def list_documents(self) -> list[DocumentRecord]:
-        """Obtiene una lista paginada de todos los documentos almacenados."""
+        """Obtiene los documentos almacenados, hasta el tope del repositorio."""
         return await self._repository.get_all()
 
     async def update_document(self, doc_id: UUID, new_text: str) -> DocumentRecord | None:
@@ -65,7 +65,7 @@ class DocumentService:
         return await self._repository.update(doc_id, new_text)
 
     async def delete_document(self, doc_id: UUID) -> bool:
-        """Elimina un documento del sistema físico de forma permanente."""
+        """Elimina un documento de la base de datos."""
         result = await self._repository.delete(doc_id)
         if result:
             logger.info(f"Documento con ID {doc_id} eliminado correctamente.")
