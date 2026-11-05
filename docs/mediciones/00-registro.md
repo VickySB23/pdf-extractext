@@ -169,3 +169,9 @@
 - Stack completo, Traefik limitado a 1 CPU y 1 GiB, k6 dentro de Docker, una corrida:
   541 peticiones, 12,73 req/s, 0 % de error, p50 6,63 s, p95 8,88 s, máx 9,77 s.
 - Una corrida no alcanza para concluir; la medición final queda pendiente.
+
+## Control con Consul (sin archivo guardado)
+- Vegeta dentro de Docker, una corrida: 14,87 % de éxito (223/1500), 503: 1273, código 0: 4,
+  p50 20,06 s. Las 5 réplicas siguieron sanas en las 14 muestras tomadas durante la prueba.
+- `docker stop` da de baja la réplica al instante; `docker kill` la saca en menos de 12 s y
+  el servicio sigue respondiendo. Al volver, la réplica se registra sola.

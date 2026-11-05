@@ -19,7 +19,9 @@ El contenido se entrega en Markdown liviano por defecto, configurable a texto pl
 Cliente, k6 o Vegeta
     |
     v
-Traefik :8080 --- /extract ---------> 5 réplicas de extraction-service
+Traefik :8080 <-- lee las rutas --- Consul :8500 <-- se registra cada réplica
+    |
+    |--- /extract ------------------> 5 réplicas de extraction-service
     |                                        ^
     | /api/documents, /health                | /extract
     v                                        |
@@ -30,7 +32,8 @@ MongoDB
 ```
 
 - `docker compose up --build` levanta todo el stack desde `docker-compose.yml`.
-- Traefik publica el puerto `8080` y su dashboard en `8081`.
+- Traefik publica el puerto `8080` y su dashboard en `8081`. Consul publica su interfaz en `8500`.
+- Cada réplica se registra en Consul al arrancar, con ID propio, chequeo HTTP y sus rutas como tags, y se da de baja al apagarse. Traefik descubre las rutas desde Consul, sin labels en el compose ni acceso al socket de Docker.
 - Traefik balancea `/extract` con estrategia `p2c`, también para las llamadas de `document-service`.
 - Cada contenedor tiene límites de CPU y memoria; las réplicas usan 1 CPU y 512 MiB.
 - Las imágenes propias están versionadas: `pdf-extraction-service:v1.0.0` y `pdf-document-service:v1.0.0`.
@@ -66,7 +69,7 @@ Se muestra abreviada.
 ```
 
 ## 5. Configuración
-Estas son las variables de `extraction-service`. `document-service` usa `MONGO_URI`, `MONGO_DB_NAME`, `EXTRACTION_URL` y `MAX_UPLOAD_SIZE_BYTES`.
+Estas son las variables de `extraction-service`. `document-service` usa `MONGO_URI`, `MONGO_DB_NAME`, `EXTRACTION_URL`, `CONSUL_URL` y `MAX_UPLOAD_SIZE_BYTES`.
 El compose inyecta las de cola y formato, y deja el tamaño máximo con su default.
 | Variable | Default | Uso |
 | --- | --- | --- |
@@ -74,6 +77,7 @@ El compose inyecta las de cola y formato, y deja el tamaño máximo con su defau
 | `QUEUE_TIMEOUT_SECONDS` | `20` | Tiempo máximo de espera antes de responder `503`. |
 | `RETRY_AFTER_SECONDS` | `1` | Valor del header `Retry-After` ante saturación. |
 | `OUTPUT_FORMAT` | `markdown` | Formato de salida: `markdown` o `text`. |
+| `CONSUL_URL` | sin definir | Dirección de Consul. Sin ella el servicio no se registra. |
 
 El puerto interno de `extraction-service` es fijo: `8001`. Traefik expone el stack en `8080`.
 Cada réplica atiende una extracción por vez, porque PyMuPDF no admite hilos concurrentes.
@@ -135,7 +139,7 @@ curl http://localhost:8080/api/documents
 
 La respuesta incluye `id`, `original_filename`, `full_text`, `checksum` y `created_at`. El router valida la extensión `.pdf`; `extraction-service` valida el archivo vacío, el tamaño máximo de 10 MB y la firma `%PDF-`. Una subida sin `Content-Length` se rechaza con `411`.
 
-Traefik no enruta un contenedor mientras su healthcheck está en `starting`. Justo después de arrancar, una petición puede devolver `404` durante unos segundos. Para esperar a que todo esté listo:
+Traefik solo enruta los servicios que Consul marca como sanos. Justo después de arrancar, una petición puede devolver `404` durante unos segundos. Para esperar a que todo esté listo:
 
 ```bash
 docker compose up --build -d --wait
