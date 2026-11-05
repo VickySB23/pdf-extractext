@@ -29,9 +29,6 @@ services:
         condition: service_started
       extraction-service:
         condition: service_healthy
-    volumes:
-      - ./services/document-service/app:/app/app
-    command: uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     networks:
       - traefik-net   # para que Traefik lo alcance
       - backend       # para hablar con la db y el extraction-service
@@ -53,14 +50,6 @@ services:
       retries: 10
     networks:
       - backend       # NO está en traefik-net: los clientes no llegan directo
-    # Para exponerlo por el gateway (opcional), sumá traefik-net a networks y estos labels:
-    # labels:
-    #   - "traefik.enable=true"
-    #   - "traefik.docker.network=traefik-net"
-    #   - "traefik.http.routers.extract.rule=PathPrefix(`/api/extract`)"
-    #   - "traefik.http.routers.extract.middlewares=extract-strip"
-    #   - "traefik.http.middlewares.extract-strip.stripprefix.prefixes=/api"
-    #   - "traefik.http.services.extract.loadbalancer.server.port=8001"
 
   # ── Base de datos (solo la ve document-service) ─────────────
   db:
