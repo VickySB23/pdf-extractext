@@ -6,39 +6,41 @@ from fastapi import FastAPI
 from motor.motor_asyncio import AsyncIOMotorClient
 
 from app.application.services.document_service import DocumentService
-from app.application.services.pdf_service import PDFService
 from app.core import get_settings
 from app.core.logger import logger
+from app.infrastructure.clients.http_text_extractor import HttpTextExtractor
 from app.infrastructure.repositories.mongo_repository import MongoDocumentRepository
 from app.presentation.routers.document_router import router as document_router
 from app.presentation.routers.health_router import router as health_router
 
 
-def create_app_services() -> tuple[DocumentService, AsyncIOMotorClient]:
+def create_app_services() -> tuple[DocumentService, AsyncIOMotorClient, HttpTextExtractor]:
     """Build application services and wire their infrastructure dependencies."""
     settings = get_settings()
     logger.info(f"Conectando a MongoDB en: {settings.mongo_uri} (DB: {settings.mongo_db_name})")
     client = AsyncIOMotorClient(settings.mongo_uri)
     db = client[settings.mongo_db_name]
+    text_extractor = HttpTextExtractor(base_url=settings.extraction_url)
     document_service = DocumentService(
-        pdf_service=PDFService(),
+        extractor=text_extractor,
         repository=MongoDocumentRepository(db),
     )
     logger.info("Servicios ensamblados e inyectados correctamente.")
-    return document_service, client
+    return document_service, client, text_extractor
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifecycle."""
     logger.info("--- Iniciando Sistema de Gestión de Documentos PDF ---")
-    document_service, mongo_client = create_app_services()
+    document_service, mongo_client, text_extractor = create_app_services()
     app.state.document_service = document_service
     app.state.mongo_client = mongo_client
-    get_settings().upload_dir.mkdir(parents=True, exist_ok=True)
+    app.state.text_extractor = text_extractor
     try:
         yield
     finally:
+        await app.state.text_extractor.aclose()
         app.state.mongo_client.close()
         logger.info("--- Sistema apagado correctamente ---")
 

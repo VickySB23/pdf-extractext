@@ -5,11 +5,30 @@ Se encarga exclusivamente de recibir peticiones, validar formatos y retornar res
 """
 from uuid import UUID
 from fastapi import APIRouter, File, UploadFile, HTTPException, Depends, Request
+from app.application.interfaces.text_extractor import (
+    EncryptedPDFError,
+    ExtractorProtocolError,
+    ExtractorUnavailableError,
+    FileTooLargeError,
+    InvalidPDFError,
+    NoTextError,
+    TextExtractionError,
+)
 from app.application.services.document_service import DocumentService
 from app.core import get_settings
 from app.presentation.schemas.document_schema import DocumentResponse, DocumentUpdateRequest
 
 router = APIRouter(prefix="/api", tags=["documents"])
+
+
+def _retry_after_headers(retry_after: str | None) -> dict[str, str] | None:
+    """Devuelve un header Retry-After solo si el valor es un delta-segundos válido."""
+    if retry_after is None:
+        return None
+    value = retry_after.strip()
+    if not value or not value.isascii() or not value.isdigit():
+        return None
+    return {"Retry-After": value}
 
 def get_document_service(request: Request) -> DocumentService:
     """Inyecta el servicio orquestador en los endpoints para desacoplar las capas."""
@@ -45,6 +64,23 @@ async def create_document_endpoint(
     
     try:
         return await service.create_document(content, safe_filename)
+    except (NoTextError, InvalidPDFError, EncryptedPDFError) as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except FileTooLargeError as e:
+        raise HTTPException(status_code=413, detail=str(e))
+    except ExtractorUnavailableError as e:
+        raise HTTPException(
+            status_code=503,
+            detail=str(e),
+            headers=_retry_after_headers(e.retry_after),
+        )
+    except ExtractorProtocolError as e:
+        raise HTTPException(status_code=502, detail=str(e))
+    except TextExtractionError:
+        raise HTTPException(
+            status_code=502,
+            detail="No se pudo procesar la extracción del documento.",
+        )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
