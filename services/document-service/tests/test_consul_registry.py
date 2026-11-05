@@ -41,6 +41,10 @@ async def test_registers_with_own_id_and_http_check():
     assert body["Port"] == 8000
     assert body["Check"]["HTTP"] == "http://172.20.0.6:8000/health"
     assert "traefik.enable=true" in body["Tags"]
+    assert (
+        "traefik.http.routers.documents.middlewares=documents-limit,documents-breaker"
+        in body["Tags"]
+    )
 
 
 @pytest.mark.asyncio

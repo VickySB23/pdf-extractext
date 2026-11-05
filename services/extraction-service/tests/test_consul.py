@@ -35,6 +35,9 @@ def test_registra_la_replica_con_id_propio_y_chequeo_http():
     assert cuerpo["Port"] == 8001
     assert cuerpo["Check"]["HTTP"] == "http://172.20.0.5:8001/health"
     assert "traefik.http.routers.extract.rule=Path(`/extract`)" in cuerpo["Tags"]
+    assert (
+        "traefik.http.routers.extract.middlewares=extract-limit,extract-breaker" in cuerpo["Tags"]
+    )
 
 
 def test_reintenta_hasta_que_consul_responde():

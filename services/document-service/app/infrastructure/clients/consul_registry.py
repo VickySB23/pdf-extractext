@@ -10,10 +10,16 @@ from app.core.logger import logger
 
 SERVICE_NAME = "document-service"
 SERVICE_PORT = 8000
+# El 503 queda afuera: es el rechazo controlado de la cola, no una falla del servicio.
+_BREAKER_EXPRESSION = "NetworkErrorRatio() > 0.5 || ResponseCodeRatio(500, 503, 0, 600) > 0.25"
 TAGS = [
     "traefik.enable=true",
     "traefik.http.routers.documents.rule=PathPrefix(`/api/documents`) || Path(`/health`)",
     "traefik.http.routers.documents.entrypoints=web",
+    "traefik.http.routers.documents.middlewares=documents-limit,documents-breaker",
+    "traefik.http.middlewares.documents-limit.ratelimit.average=20",
+    "traefik.http.middlewares.documents-limit.ratelimit.burst=40",
+    f"traefik.http.middlewares.documents-breaker.circuitbreaker.expression={_BREAKER_EXPRESSION}",
 ]
 
 _ATTEMPTS = 10

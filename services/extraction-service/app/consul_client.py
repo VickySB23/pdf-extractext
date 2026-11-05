@@ -10,11 +10,17 @@ from app.logger import logger
 
 NOMBRE_SERVICIO = "extraction-service"
 PUERTO = 8001
+# El 503 queda afuera: es el rechazo controlado de la cola, no una falla del servicio.
+_EXPRESION_CORTE = "NetworkErrorRatio() > 0.5 || ResponseCodeRatio(500, 503, 0, 600) > 0.25"
 TAGS = [
     "traefik.enable=true",
     "traefik.http.routers.extract.rule=Path(`/extract`)",
     "traefik.http.routers.extract.entrypoints=web",
     "traefik.http.services.extract.loadbalancer.strategy=p2c",
+    "traefik.http.routers.extract.middlewares=extract-limit,extract-breaker",
+    "traefik.http.middlewares.extract-limit.ratelimit.average=20",
+    "traefik.http.middlewares.extract-limit.ratelimit.burst=40",
+    f"traefik.http.middlewares.extract-breaker.circuitbreaker.expression={_EXPRESION_CORTE}",
 ]
 
 _INTENTOS = 10
