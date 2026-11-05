@@ -84,7 +84,7 @@ Con 5 réplicas de 1 CPU el techo teórico ronda los **23 req/s en texto plano**
 | 9 | Vegeta dentro de la red de Docker (texto plano, 3 corridas) | 19,5 % de éxito (18,7 / 20,5 / 19,4 %); 7,7 % desde Windows | Medición de referencia |
 | 10 | `MAX_CONCURRENT=2` con 5 réplicas | k6 20,36 req/s; Vegeta 21,0 %. Dentro del ruido, por el mismo candado del Exp. 4; sin falta de memoria | Descartado |
 | 11 | **Markdown:** `pymupdf4llm` vs conversión propia | `pymupdf4llm`: 3,7 s contra 23 ms de texto plano en un PDF de 16 páginas. Conversión propia: +40 % de CPU (240 ms vs 172 ms por PDF) | Conversión propia liviana |
-| 12 | **Medición final** con Markdown (5 réplicas, Traefik) | k6 dentro de Docker: 12,95 req/s. Vegeta dentro de Docker: 15,8 % | Configuración final |
+| 12 | Medición con Markdown (5 réplicas, Traefik) | k6 dentro de Docker: 12,95 req/s. Vegeta dentro de Docker: 15,8 % | Configuración final |
 | 13 | Misma configuración con `OUTPUT_FORMAT=text` | k6 dentro de Docker: 19,60 req/s | El Markdown cuesta ~34 % de throughput |
 | 14 | Refactor (DRY, YAGNI, KISS) | Salidas idénticas en los 4 PDFs (SHA-256), 54 tests. Control de k6: 14,16 req/s, 0 % de error (una corrida) | Se incorpora (ver sección 8) |
 | 15 | Un cupo fijo por réplica | Se elimina `MAX_CONCURRENT` y el candado, que impedían paralelizar con cualquier valor | Se incorpora |
