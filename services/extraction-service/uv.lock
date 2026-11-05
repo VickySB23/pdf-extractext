@@ -233,6 +233,7 @@ version = "1.0.0"
 source = { virtual = "." }
 dependencies = [
     { name = "fastapi" },
+    { name = "httpx" },
     { name = "pymupdf" },
     { name = "python-multipart" },
     { name = "uvicorn", extra = ["standard"] },
@@ -241,7 +242,6 @@ dependencies = [
 [package.dev-dependencies]
 dev = [
     { name = "cryptography" },
-    { name = "httpx" },
     { name = "pypdf" },
     { name = "pytest" },
 ]
@@ -249,6 +249,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "fastapi", specifier = ">=0.115" },
+    { name = "httpx", specifier = ">=0.27" },
     { name = "pymupdf", specifier = ">=1.24" },
     { name = "python-multipart", specifier = ">=0.0.9" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.30" },
@@ -257,7 +258,6 @@ requires-dist = [
 [package.metadata.requires-dev]
 dev = [
     { name = "cryptography", specifier = ">=50.0.2" },
-    { name = "httpx", specifier = ">=0.27" },
     { name = "pypdf", specifier = ">=5.0" },
     { name = "pytest", specifier = ">=8.0" },
 ]

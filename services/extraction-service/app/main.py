@@ -2,11 +2,13 @@ import asyncio
 import os
 from contextlib import asynccontextmanager
 
+import httpx
 from fastapi import FastAPI, HTTPException, Request
 from pydantic import BaseModel
 from starlette.datastructures import UploadFile
 from starlette.formparsers import MultiPartParser
 
+from app.consul_client import crear_registro
 from app.logger import logger
 from app.pdf_service import (
     FORMATOS,
@@ -57,6 +59,9 @@ MultiPartParser.spool_max_size = MAX_UPLOAD_SIZE_BYTES + MULTIPART_OVERHEAD_BYTE
 
 OUTPUT_FORMAT = _read_choice("OUTPUT_FORMAT", FORMATO_POR_DEFECTO, FORMATOS)
 
+# Sin esta variable el servicio corre solo, por ejemplo en desarrollo local.
+CONSUL_URL = os.getenv("CONSUL_URL")
+
 logger.info(
     "Configuración: QUEUE_TIMEOUT_SECONDS=%s MAX_UPLOAD_SIZE_BYTES=%s "
     "RETRY_AFTER_SECONDS=%s OUTPUT_FORMAT=%s",
@@ -70,7 +75,21 @@ logger.info(
 _CUPO = asyncio.Semaphore(1)
 
 
-app = FastAPI(title="extraction-service", version="1.0.0")
+@asynccontextmanager
+async def ciclo_de_vida(_app: FastAPI):
+    if CONSUL_URL is None:
+        yield
+        return
+    async with httpx.AsyncClient(base_url=CONSUL_URL, timeout=5.0) as cliente:
+        registro = crear_registro(cliente, CONSUL_URL)
+        await registro.registrar()
+        try:
+            yield
+        finally:
+            await registro.desregistrar()
+
+
+app = FastAPI(title="extraction-service", version="1.0.0", lifespan=ciclo_de_vida)
 
 
 class ExtractResponse(BaseModel):

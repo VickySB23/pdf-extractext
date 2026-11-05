@@ -5,6 +5,7 @@ description = "Microservicio stateless: extrae el texto de un PDF y lo devuelve 
 requires-python = ">=3.11"
 dependencies = [
     "fastapi>=0.115",
+    "httpx>=0.27",
     "uvicorn[standard]>=0.30",
     "pymupdf>=1.24",
     "python-multipart>=0.0.9",
@@ -13,7 +14,6 @@ dependencies = [
 [dependency-groups]
 dev = [
     "pytest>=8.0",
-    "httpx>=0.27",
     "cryptography>=50.0.2",
     "pypdf>=5.0",
 ]
