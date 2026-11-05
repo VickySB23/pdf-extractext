@@ -3,7 +3,7 @@
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
-from motor.motor_asyncio import AsyncIOMotorClient
+from pymongo import AsyncMongoClient
 
 from app.application.services.document_service import DocumentService
 from app.core import get_settings
@@ -17,12 +17,12 @@ from app.presentation.upload_limits import keep_multipart_in_memory, reject_unbo
 
 
 def create_app_services() -> tuple[
-    DocumentService, AsyncIOMotorClient, HttpTextExtractor, MongoDocumentRepository
+    DocumentService, AsyncMongoClient, HttpTextExtractor, MongoDocumentRepository
 ]:
     """Build application services and wire their infrastructure dependencies."""
     settings = get_settings()
     logger.info(f"Conectando a MongoDB en: {settings.mongo_uri} (DB: {settings.mongo_db_name})")
-    client = AsyncIOMotorClient(settings.mongo_uri)
+    client = AsyncMongoClient(settings.mongo_uri)
     db = client[settings.mongo_db_name]
     text_extractor = HttpTextExtractor(base_url=settings.extraction_url)
     repository = MongoDocumentRepository(db)
@@ -50,7 +50,7 @@ async def lifespan(app: FastAPI):
         if consul:
             await consul.deregister()
         await app.state.text_extractor.aclose()
-        app.state.mongo_client.close()
+        await app.state.mongo_client.close()
         logger.info("--- Sistema apagado correctamente ---")
 
 

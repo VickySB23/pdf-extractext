@@ -76,7 +76,6 @@ source = { virtual = "." }
 dependencies = [
     { name = "fastapi" },
     { name = "httpx" },
-    { name = "motor" },
     { name = "pydantic" },
     { name = "pydantic-settings" },
     { name = "pymongo" },
@@ -95,10 +94,9 @@ dev = [
 requires-dist = [
     { name = "fastapi", specifier = ">=0.100.0" },
     { name = "httpx", specifier = ">=0.25.0" },
-    { name = "motor", specifier = ">=3.7.1" },
     { name = "pydantic", specifier = ">=2.0.0" },
     { name = "pydantic-settings", specifier = ">=2.0.0" },
-    { name = "pymongo", specifier = ">=4.9" },
+    { name = "pymongo", specifier = ">=4.19" },
     { name = "python-multipart", specifier = ">=0.0.6" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.23.0" },
 ]

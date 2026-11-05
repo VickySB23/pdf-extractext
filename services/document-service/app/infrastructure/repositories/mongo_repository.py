@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime
-from motor.motor_asyncio import AsyncIOMotorDatabase
+from pymongo.asynchronous.database import AsyncDatabase
 from pymongo.errors import DuplicateKeyError
 from app.application.interfaces.document_repository import DocumentRecord, DuplicateDocumentError
 
@@ -8,7 +8,7 @@ _LIST_LIMIT = 100
 
 
 class MongoDocumentRepository:
-    def __init__(self, db: AsyncIOMotorDatabase):
+    def __init__(self, db: AsyncDatabase):
         self._collection = db["documents"]
 
     async def ensure_indexes(self) -> None:

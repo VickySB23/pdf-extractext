@@ -27,7 +27,7 @@ async def test_create_app_services_wires_extractor_from_settings(extraction_env)
         assert isinstance(extractor, HttpTextExtractor)
         assert str(extractor._client.base_url) == "http://extraction-test:8001"
     finally:
-        mongo_client.close()
+        await mongo_client.close()
         await extractor.aclose()
 
 
