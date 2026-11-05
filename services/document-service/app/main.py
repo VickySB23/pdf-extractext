@@ -12,6 +12,7 @@ from app.infrastructure.clients.http_text_extractor import HttpTextExtractor
 from app.infrastructure.repositories.mongo_repository import MongoDocumentRepository
 from app.presentation.routers.document_router import router as document_router
 from app.presentation.routers.health_router import router as health_router
+from app.presentation.upload_limits import keep_multipart_in_memory, reject_unbounded_uploads
 
 
 def create_app_services() -> tuple[DocumentService, AsyncIOMotorClient, HttpTextExtractor]:
@@ -50,6 +51,9 @@ app = FastAPI(
     version="1.0.0",
     lifespan=lifespan,
 )
+
+keep_multipart_in_memory()
+app.middleware("http")(reject_unbounded_uploads)
 
 app.include_router(document_router)
 app.include_router(health_router)
