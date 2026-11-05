@@ -56,12 +56,6 @@ services:
       QUEUE_TIMEOUT_SECONDS: "${QUEUE_TIMEOUT_SECONDS:-20}"
       RETRY_AFTER_SECONDS: "${RETRY_AFTER_SECONDS:-1}"
       OUTPUT_FORMAT: "${OUTPUT_FORMAT:-markdown}"
-    healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/health')"]
-      interval: 10s
-      timeout: 5s
-      retries: 6
-      start_period: 10s
     depends_on:
       consul:
         condition: service_healthy
@@ -82,11 +76,6 @@ services:
       CONSUL_URL: http://consul:8500
       # Pasa por Traefik para balancear entre réplicas.
       EXTRACTION_URL: http://traefik
-    healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
-      interval: 3s
-      timeout: 3s
-      retries: 10
     depends_on:
       traefik:
         condition: service_started

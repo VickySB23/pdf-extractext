@@ -17,5 +17,7 @@ RUN useradd -m apiuser && chown -R apiuser:apiuser /app
 USER apiuser
 
 EXPOSE 8000
+HEALTHCHECK --interval=5s --timeout=3s --start-period=5s --retries=10 \
+    CMD ["python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
 
 CMD ["/app/.venv/bin/uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
