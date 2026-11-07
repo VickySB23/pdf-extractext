@@ -39,7 +39,7 @@ MongoDB
 - Las imágenes propias están versionadas: `pdf-extraction-service:v1.0.0` y `pdf-document-service:v1.0.0`.
 - La extracción usa PyMuPDF por su mejor rendimiento frente a `pypdf`.
 - El backpressure se implementa con un cupo por réplica, `503` y header `Retry-After`.
-- Traefik aplica el rate limit (`429`, 20 req/s con ráfaga de 40 por cliente) y el circuit breaker. Su expresión excluye el `503`, porque es un rechazo controlado de la cola.
+- Traefik aplica el rate limit (`429`, por defecto 20 req/s con ráfaga de 40 por cliente) y el circuit breaker. Su expresión excluye el `503`, porque es un rechazo controlado de la cola.
 - `document-service` reintenta hasta 3 veces los errores de conexión, `429`, `502` y `504`. No reintenta timeouts ni un `503` de cola llena.
 - El cupo se adquiere antes de leer el cuerpo para no retener PDFs en memoria.
 - El Markdown es una conversión propia y liviana: títulos, viñetas y párrafos.
@@ -70,8 +70,8 @@ Se muestra abreviada.
 ```
 
 ## 5. Configuración
-Estas son las variables de `extraction-service`. `document-service` usa `MONGO_URI`, `MONGO_DB_NAME`, `EXTRACTION_URL`, `CONSUL_URL` y `MAX_UPLOAD_SIZE_BYTES`.
-El compose inyecta las de Consul, cola y formato, y deja el tamaño máximo con su default.
+Estas son las variables de `extraction-service`. `document-service` usa `MONGO_URI`, `MONGO_DB_NAME`, `EXTRACTION_URL`, `CONSUL_URL`, `MAX_UPLOAD_SIZE_BYTES` y las dos de rate limit.
+El compose inyecta las de Consul, cola, formato y rate limit, y deja el tamaño máximo con su default.
 | Variable | Default | Uso |
 | --- | --- | --- |
 | `MAX_UPLOAD_SIZE_BYTES` | `10485760` | Tamaño máximo aceptado para el PDF. |
@@ -79,6 +79,8 @@ El compose inyecta las de Consul, cola y formato, y deja el tamaño máximo con 
 | `RETRY_AFTER_SECONDS` | `1` | Valor del header `Retry-After` ante saturación. |
 | `OUTPUT_FORMAT` | `markdown` | Formato de salida: `markdown` o `text`. |
 | `CONSUL_URL` | sin definir | Dirección de Consul. Sin ella el servicio no se registra. |
+| `RATE_LIMIT_AVERAGE` | `20` | Peticiones por segundo admitidas por Traefik para cada cliente. |
+| `RATE_LIMIT_BURST` | `40` | Ráfaga máxima admitida por Traefik. |
 
 El puerto interno de `extraction-service` es fijo: `8001`. Traefik expone el stack en `8080`.
 Cada réplica atiende una extracción por vez, porque PyMuPDF no admite hilos concurrentes.

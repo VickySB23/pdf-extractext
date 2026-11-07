@@ -41,7 +41,7 @@ Cliente, k6 o Vegeta ──► Traefik v3.6 (puerto 8080) ◄── rutas ──
 
 ### 2.3 Twelve-Factor App
 
-- **III. Configuración:** todas las opciones por variables de entorno (`QUEUE_TIMEOUT_SECONDS`, `RETRY_AFTER_SECONDS`, `MAX_UPLOAD_SIZE_BYTES`, `OUTPUT_FORMAT`), validadas al arrancar: si una es inválida, el servicio no inicia y explica por qué.
+- **III. Configuración:** todas las opciones por variables de entorno (`QUEUE_TIMEOUT_SECONDS`, `RETRY_AFTER_SECONDS`, `MAX_UPLOAD_SIZE_BYTES`, `OUTPUT_FORMAT`, `RATE_LIMIT_AVERAGE`, `RATE_LIMIT_BURST`), validadas al arrancar: si una es inválida, el servicio no inicia y explica por qué.
 - **VI. Procesos:** el servicio no guarda estado. El PDF se procesa en memoria, sin escribirlo a disco, tanto por cuerpo binario como por `multipart`.
 - **VII. Port binding:** el servicio expone HTTP en el puerto fijo `8001` del contenedor; cada réplica es una red propia y Traefik publica el acceso.
 - **XI. Logs:** salida a *stdout*.
@@ -152,7 +152,7 @@ No se superaron los valores de referencia de la cátedra en throughput ni en tas
 
 **Variación.** Vegeta con Markdown varió entre 20,6 % y 31,5 %. No se determinó la causa, por lo que el promedio debe leerse con cautela.
 
-**Texto plano con k6.** El límite de 20 req/s está ajustado a la configuración por defecto (Markdown). En texto plano la capacidad se acerca a ese límite y k6, que reintenta de inmediato al recibir `429`, dispara muchas peticiones rechazadas: 54 % a 83 % de error, con ~17,6 respuestas exitosas por segundo. Antes del rate limit, esa configuración dio 19,60 req/s con 0 % de error. Si se usara texto plano, habría que subir el límite.
+**Texto plano con k6.** El límite de 20 req/s está ajustado a la configuración por defecto (Markdown). En texto plano la capacidad se acerca a ese límite y k6, que reintenta de inmediato al recibir `429`, dispara muchas peticiones rechazadas: 54 % a 83 % de error, con ~17,6 respuestas exitosas por segundo. Antes del rate limit, esa configuración dio 19,60 req/s con 0 % de error. Si se usara texto plano, habría que subir el límite con `RATE_LIMIT_AVERAGE`.
 
 **Diferencia restante con la cátedra.** No pudimos determinar su causa. Se desconocen el hardware y el sistema operativo de la medición de la cátedra, mientras que nosotros medimos en una sola PC con Windows y Docker Desktop, donde la capa de red costaba capacidad (11,7 contra 20,3 req/s para el mismo código). La ruta de archivos del script de la cátedra sugiere un entorno Linux, pero es una inferencia.
 
@@ -160,7 +160,7 @@ No se superaron los valores de referencia de la cátedra en throughput ni en tas
 
 ## 8. Calidad del código y pruebas
 
-- **Pruebas:** 64 pruebas automáticas en `services/extraction-service` (contrato HTTP, backpressure, configuración, Markdown, extracción), con ~94 % de cobertura de líneas.
+- **Pruebas:** 66 pruebas automáticas en `services/extraction-service` (contrato HTTP, backpressure, configuración, Markdown, extracción), con ~94 % de cobertura de líneas.
 - **Refactor DRY / YAGNI / KISS:** se eliminó código repetido (construcción de errores HTTP, constantes de formato, validación duplicada de la firma `%PDF-`), código inalcanzable y reglas sin efecto medible (por ejemplo, la detección de subtítulos por nombre de fuente, que no cambiaba el resultado en los 4 PDFs oficiales). Funciones largas se dividieron en funciones pequeñas.
 - **Verificación de que no cambió el comportamiento:** se compararon los hashes SHA-256 de la salida (Markdown y texto plano) de los 4 PDFs oficiales antes y después: los 8 resultaron idénticos.
 - **Comentarios:** se conservaron solo los que explican decisiones no evidentes (límite de hilos de PyMuPDF, bandera de lectura de texto, orden del semáforo, etc.).
