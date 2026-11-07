@@ -21,7 +21,7 @@ def create_app_services() -> tuple[
 ]:
     """Build application services and wire their infrastructure dependencies."""
     settings = get_settings()
-    logger.info(f"Conectando a MongoDB en: {settings.mongo_uri} (DB: {settings.mongo_db_name})")
+    logger.info(f"Conectando a MongoDB (DB: {settings.mongo_db_name})")
     client = AsyncMongoClient(settings.mongo_uri)
     db = client[settings.mongo_db_name]
     text_extractor = HttpTextExtractor(base_url=settings.extraction_url)

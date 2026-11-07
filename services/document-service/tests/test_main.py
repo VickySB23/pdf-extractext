@@ -20,6 +20,18 @@ def extraction_env(monkeypatch):
 
 
 @pytest.mark.asyncio
+async def test_the_mongo_uri_is_not_logged(extraction_env, monkeypatch, caplog):
+    monkeypatch.setenv("MONGO_URI", "mongodb://usuario:secreto@db:27017")
+    get_settings.cache_clear()
+
+    _, mongo_client, extractor, _ = create_app_services()
+
+    await mongo_client.close()
+    await extractor.aclose()
+    assert "secreto" not in caplog.text
+
+
+@pytest.mark.asyncio
 async def test_create_app_services_wires_extractor_from_settings(extraction_env):
     document_service, mongo_client, extractor, _ = create_app_services()
     try:
