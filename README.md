@@ -32,7 +32,7 @@ MongoDB
 ```
 
 - `docker compose up --build` levanta todo el stack desde `docker-compose.yml`.
-- Traefik publica el puerto `8080` y su dashboard en `8081`. Consul publica su interfaz en `8500`.
+- Traefik publica el puerto `8080`. En desarrollo, `docker-compose.override.yml` agrega su dashboard en `8081` y la interfaz de Consul en `8500`.
 - Cada réplica se registra en Consul al arrancar, con ID propio, chequeo HTTP y sus rutas como tags, y se da de baja al apagarse. Traefik descubre las rutas desde Consul, sin labels en el compose ni acceso al socket de Docker.
 - Traefik balancea `/extract` con estrategia `p2c`, también para las llamadas de `document-service`.
 - Cada contenedor tiene límites de CPU y memoria; las réplicas usan 1 CPU y 512 MiB.
@@ -82,6 +82,8 @@ El compose inyecta las de Consul, cola, formato y rate limit, y deja el tamaño 
 | `RATE_LIMIT_AVERAGE` | `20` | Peticiones por segundo admitidas por Traefik para cada cliente. |
 | `RATE_LIMIT_BURST` | `40` | Ráfaga máxima admitida por Traefik. |
 
+Para cambiar valores, copiá `.env.example` como `.env`.
+
 El puerto interno de `extraction-service` es fijo: `8001`. Traefik expone el stack en `8080`.
 Cada réplica atiende una extracción por vez, porque PyMuPDF no admite hilos concurrentes.
 
@@ -127,6 +129,8 @@ tests/stress/              Scripts k6, Vegeta y PDFs oficiales
 docs/informe/              Informe técnico final
 docs/mediciones/           Registro y salidas crudas de medición
 docker-compose.yml         Stack completo
+docker-compose.override.yml  Paneles para desarrollo; Compose lo carga solo
+.env.example               Variables disponibles
 ```
 
 ## 9. API de documentos
@@ -189,7 +193,7 @@ Para probar con un cliente HTTP como Postman, Bruno o Insomnia:
 | Subir | `POST http://localhost:8080/api/documents` | `form-data`, clave `file`, tipo archivo |
 | Editar | `PUT http://localhost:8080/api/documents/{id}` | JSON: `{"new_text": "Texto nuevo"}` |
 
-Las interfaces web son Consul, en `http://localhost:8500`, y Traefik, en `http://localhost:8081`.
+Las interfaces web son Consul, en `http://localhost:8500`, y Traefik, en `http://localhost:8081`. Para levantar sin ellas: `docker compose -f docker-compose.yml up --build`.
 
 Para ver la tolerancia a fallos, apagá una réplica. Consul muestra una instancia menos y la recupera al volver a iniciarla:
 
