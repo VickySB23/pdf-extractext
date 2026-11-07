@@ -1,0 +1,12 @@
+# Solo para desarrollo: Compose lo suma a docker-compose.yml sin pedirlo.
+# Para levantar sin paneles: docker compose -f docker-compose.yml up --build
+services:
+  traefik:
+    environment:
+      TRAEFIK_API_INSECURE: "true"
+    ports:
+      - "8081:8080"
+
+  consul:
+    ports:
+      - "8500:8500"

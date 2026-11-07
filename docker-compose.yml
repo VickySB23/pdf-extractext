@@ -3,16 +3,14 @@ name: pdf-extractext
 services:
   traefik:
     image: traefik:v3.6
-    command:
-      - "--api.insecure=true"   # dashboard en :8081, solo para desarrollo
-      - "--providers.consulcatalog=true"
-      - "--providers.consulcatalog.endpoint.address=consul:8500"
-      - "--providers.consulcatalog.exposedbydefault=false"
-      - "--providers.consulcatalog.refreshinterval=5s"
-      - "--entrypoints.web.address=:80"
+    environment:
+      TRAEFIK_PROVIDERS_CONSULCATALOG: "true"
+      TRAEFIK_PROVIDERS_CONSULCATALOG_ENDPOINT_ADDRESS: consul:8500
+      TRAEFIK_PROVIDERS_CONSULCATALOG_EXPOSEDBYDEFAULT: "false"
+      TRAEFIK_PROVIDERS_CONSULCATALOG_REFRESHINTERVAL: 5s
+      TRAEFIK_ENTRYPOINTS_WEB_ADDRESS: ":80"
     ports:
       - "8080:80"
-      - "8081:8080"
     depends_on:
       consul:
         condition: service_healthy
@@ -27,8 +25,6 @@ services:
   consul:
     image: hashicorp/consul:1.21
     command: agent -server -bootstrap-expect=1 -ui -client=0.0.0.0 -bind={{GetPrivateIP}}
-    ports:
-      - "8500:8500"
     deploy:
       resources:
         limits:
