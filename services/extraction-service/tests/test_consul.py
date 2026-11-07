@@ -42,6 +42,22 @@ def test_registra_la_replica_con_id_propio_y_chequeo_http():
     )
 
 
+def test_el_rate_limit_sale_de_la_configuracion(monkeypatch):
+    monkeypatch.setattr(config, "RATE_LIMIT_AVERAGE", 7)
+    monkeypatch.setattr(config, "RATE_LIMIT_BURST", 9)
+    recibidas = []
+
+    def handler(req):
+        recibidas.append(req)
+        return httpx.Response(200)
+
+    asyncio.run(registro(handler).registrar())
+
+    tags = json.loads(recibidas[0].content)["Tags"]
+    assert "traefik.http.middlewares.extract-limit.ratelimit.average=7" in tags
+    assert "traefik.http.middlewares.extract-limit.ratelimit.burst=9" in tags
+
+
 def test_reintenta_hasta_que_consul_responde():
     respuestas = iter([httpx.ConnectError("caído"), httpx.Response(500), httpx.Response(200)])
 

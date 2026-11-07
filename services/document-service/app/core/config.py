@@ -2,6 +2,7 @@
 
 from functools import lru_cache
 
+from pydantic import PositiveInt
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -11,6 +12,8 @@ class Settings(BaseSettings):
     extraction_url: str = "http://localhost:8001"
     consul_url: str | None = None
     max_upload_size_bytes: int = 10 * 1024 * 1024
+    rate_limit_average: PositiveInt = 20
+    rate_limit_burst: PositiveInt = 40
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 

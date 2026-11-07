@@ -6,6 +6,7 @@ from urllib.parse import urlsplit
 
 import httpx
 
+from app.core import config
 from app.core.logger import logger
 
 NOMBRE_SERVICIO = "extraction-service"
@@ -18,8 +19,6 @@ TAGS = [
     "traefik.http.routers.extract.entrypoints=web",
     "traefik.http.services.extract.loadbalancer.strategy=p2c",
     "traefik.http.routers.extract.middlewares=extract-limit,extract-breaker",
-    "traefik.http.middlewares.extract-limit.ratelimit.average=20",
-    "traefik.http.middlewares.extract-limit.ratelimit.burst=40",
     f"traefik.http.middlewares.extract-breaker.circuitbreaker.expression={_EXPRESION_CORTE}",
 ]
 
@@ -54,7 +53,11 @@ class RegistroConsul:
             "Name": NOMBRE_SERVICIO,
             "Address": self._ip,
             "Port": PUERTO,
-            "Tags": TAGS,
+            "Tags": [
+                *TAGS,
+                f"traefik.http.middlewares.extract-limit.ratelimit.average={config.RATE_LIMIT_AVERAGE}",
+                f"traefik.http.middlewares.extract-limit.ratelimit.burst={config.RATE_LIMIT_BURST}",
+            ],
             "Check": {
                 "HTTP": f"http://{self._ip}:{PUERTO}/health",
                 "Interval": "5s",

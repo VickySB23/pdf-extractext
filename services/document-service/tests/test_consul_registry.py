@@ -48,6 +48,25 @@ async def test_registers_with_own_id_and_http_check():
 
 
 @pytest.mark.asyncio
+async def test_rate_limit_comes_from_settings(monkeypatch):
+    monkeypatch.setenv("RATE_LIMIT_AVERAGE", "7")
+    monkeypatch.setenv("RATE_LIMIT_BURST", "9")
+    get_settings.cache_clear()
+    requests = []
+
+    def handler(request):
+        requests.append(request)
+        return httpx.Response(200)
+
+    await registry(handler).register()
+    get_settings.cache_clear()
+
+    tags = json.loads(requests[0].content)["Tags"]
+    assert "traefik.http.middlewares.documents-limit.ratelimit.average=7" in tags
+    assert "traefik.http.middlewares.documents-limit.ratelimit.burst=9" in tags
+
+
+@pytest.mark.asyncio
 async def test_retries_until_consul_answers():
     answers = iter([httpx.ConnectError("caído"), httpx.Response(500), httpx.Response(200)])
 

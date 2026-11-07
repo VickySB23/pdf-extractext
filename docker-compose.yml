@@ -56,6 +56,8 @@ services:
       QUEUE_TIMEOUT_SECONDS: "${QUEUE_TIMEOUT_SECONDS:-20}"
       RETRY_AFTER_SECONDS: "${RETRY_AFTER_SECONDS:-1}"
       OUTPUT_FORMAT: "${OUTPUT_FORMAT:-markdown}"
+      RATE_LIMIT_AVERAGE: "${RATE_LIMIT_AVERAGE:-20}"
+      RATE_LIMIT_BURST: "${RATE_LIMIT_BURST:-40}"
     depends_on:
       consul:
         condition: service_healthy
@@ -76,6 +78,8 @@ services:
       CONSUL_URL: http://consul:8500
       # Pasa por Traefik para balancear entre réplicas.
       EXTRACTION_URL: http://traefik
+      RATE_LIMIT_AVERAGE: "${RATE_LIMIT_AVERAGE:-20}"
+      RATE_LIMIT_BURST: "${RATE_LIMIT_BURST:-40}"
     depends_on:
       traefik:
         condition: service_started

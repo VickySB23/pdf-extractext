@@ -6,6 +6,7 @@ from urllib.parse import urlsplit
 
 import httpx
 
+from app.core import get_settings
 from app.core.logger import logger
 
 SERVICE_NAME = "document-service"
@@ -17,8 +18,6 @@ TAGS = [
     "traefik.http.routers.documents.rule=PathPrefix(`/api/documents`) || Path(`/health`)",
     "traefik.http.routers.documents.entrypoints=web",
     "traefik.http.routers.documents.middlewares=documents-limit,documents-breaker",
-    "traefik.http.middlewares.documents-limit.ratelimit.average=20",
-    "traefik.http.middlewares.documents-limit.ratelimit.burst=40",
     f"traefik.http.middlewares.documents-breaker.circuitbreaker.expression={_BREAKER_EXPRESSION}",
 ]
 
@@ -49,12 +48,17 @@ class ConsulRegistry:
         self._wait = wait
 
     def _definition(self) -> dict:
+        settings = get_settings()
         return {
             "ID": self._id,
             "Name": SERVICE_NAME,
             "Address": self._ip,
             "Port": SERVICE_PORT,
-            "Tags": TAGS,
+            "Tags": [
+                *TAGS,
+                f"traefik.http.middlewares.documents-limit.ratelimit.average={settings.rate_limit_average}",
+                f"traefik.http.middlewares.documents-limit.ratelimit.burst={settings.rate_limit_burst}",
+            ],
             "Check": {
                 "HTTP": f"http://{self._ip}:{SERVICE_PORT}/health",
                 "Interval": "5s",

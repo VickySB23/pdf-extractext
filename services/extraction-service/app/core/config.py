@@ -43,6 +43,9 @@ RETRY_AFTER_SECONDS = _read_positive_int("RETRY_AFTER_SECONDS", 1)
 
 OUTPUT_FORMAT = _read_choice("OUTPUT_FORMAT", FORMATO_POR_DEFECTO, FORMATOS)
 
+RATE_LIMIT_AVERAGE = _read_positive_int("RATE_LIMIT_AVERAGE", 20)
+RATE_LIMIT_BURST = _read_positive_int("RATE_LIMIT_BURST", 40)
+
 # Sin esta variable el servicio corre solo, por ejemplo en desarrollo local.
 CONSUL_URL = os.getenv("CONSUL_URL")
 

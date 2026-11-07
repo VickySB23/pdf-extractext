@@ -12,6 +12,8 @@ VARIABLES = (
     "RETRY_AFTER_SECONDS",
     "MAX_UPLOAD_SIZE_BYTES",
     "OUTPUT_FORMAT",
+    "RATE_LIMIT_AVERAGE",
+    "RATE_LIMIT_BURST",
 )
 INVALIDAS = ["cero", "0", "-1", "1.5", "", "  ", "10 MB"]
 INVALIDAS_ELECCION = ["html", "texto", "Markdown, text", "", "  "]
@@ -44,6 +46,13 @@ def test_read_positive_int_rechaza_valores_invalidos(monkeypatch, valor):
 def test_read_positive_int_usa_el_default_si_no_esta_definida(monkeypatch, nombre, default):
     monkeypatch.delenv(nombre, raising=False)
     assert config._read_positive_int(nombre, default) == default
+
+
+def test_el_rate_limit_tiene_valores_por_defecto(monkeypatch, restaurar_config):
+    monkeypatch.delenv("RATE_LIMIT_AVERAGE", raising=False)
+    monkeypatch.delenv("RATE_LIMIT_BURST", raising=False)
+    importlib.reload(config)
+    assert (config.RATE_LIMIT_AVERAGE, config.RATE_LIMIT_BURST) == (20, 40)
 
 
 def test_queue_timeout_invalido_falla_al_arrancar(monkeypatch, restaurar_config):
