@@ -160,6 +160,8 @@ docker compose up --build -d --wait
 
 Para detener el stack sin borrar datos, usá `docker compose down`. `down -v` borra la base.
 
+Con el stack levantado en primer plano, Ctrl+C lo apaga de forma ordenada. Si lo apretás durante el arranque, Docker Compose puede dejar la terminal esperando aunque los contenedores ya estén detenidos: cerrala y corré `docker compose down`. Con `-d --wait` esto no ocurre.
+
 ### Limitaciones
 
 - El listado devuelve como máximo 100 documentos y no tiene paginación.
