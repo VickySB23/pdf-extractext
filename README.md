@@ -206,7 +206,7 @@ docker start pdf-extractext-extraction-service-5
 
 ## 11. Seguridad
 
-El 5 de noviembre de 2026, `trivy fs .` no informó vulnerabilidades, secretos ni errores de configuración. `trivy image` no informó críticas en las imágenes propias ni paquetes de Python vulnerables; quedan paquetes de Debian.
+El 9 de noviembre de 2026, `trivy fs .` no informó vulnerabilidades, secretos ni errores de configuración. `trivy image` no informó críticas en las imágenes propias ni paquetes de Python vulnerables; quedan paquetes de Debian.
 
 Las imágenes finales no incluyen `uv` ni `pip`, y corren con un usuario sin privilegios.
 
