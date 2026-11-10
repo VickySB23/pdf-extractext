@@ -1,8 +1,4 @@
-"""
-Módulo de presentación (Controladores REST).
-Expone la interfaz de programación de aplicaciones (API) para las operaciones CRUD.
-Se encarga exclusivamente de recibir peticiones, validar formatos y retornar respuestas JSON.
-"""
+"""Endpoints REST del CRUD de documentos: traducen errores del dominio a códigos HTTP."""
 from uuid import UUID
 from fastapi import APIRouter, File, UploadFile, HTTPException, Depends, Request
 from app.application.interfaces.document_repository import DuplicateDocumentError
@@ -29,10 +25,7 @@ async def create_document_endpoint(
     file: UploadFile = File(...), 
     service: DocumentService = Depends(get_document_service)
 ):
-    """
-    Endpoint para subir un archivo PDF.
-    Cumple con la restricción de validar el formato y procesar en memoria.
-    """
+    """Sube un PDF, extrae su texto y lo guarda. El archivo se procesa en memoria."""
     filename = file.filename or "documento.pdf"
     if not filename.lower().endswith(".pdf"):
         raise HTTPException(status_code=400, detail="Solo se admiten archivos PDF")
@@ -56,7 +49,7 @@ async def create_document_endpoint(
 
 @router.get("/documents", response_model=list[DocumentResponse])
 async def list_documents_endpoint(service: DocumentService = Depends(get_document_service)):
-    """Lista todos los documentos procesados en el sistema."""
+    """Lista hasta 100 documentos guardados."""
     return await service.list_documents()
 
 @router.get("/documents/{doc_id}", response_model=DocumentResponse)

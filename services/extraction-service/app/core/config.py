@@ -37,7 +37,7 @@ MAX_UPLOAD_SIZE_BYTES = _read_positive_int("MAX_UPLOAD_SIZE_BYTES", 10 * 1024 * 
 # Margen para los límites y encabezados del multipart.
 MULTIPART_OVERHEAD_BYTES = 1024 * 1024
 
-# Invariante: debe ser menor que el timeout del cliente (Vegeta: 30 s).
+# Debe ser menor que el timeout de los clientes: document-service y Vegeta usan 30 s.
 QUEUE_TIMEOUT_SECONDS = _read_positive_int("QUEUE_TIMEOUT_SECONDS", 20)
 RETRY_AFTER_SECONDS = _read_positive_int("RETRY_AFTER_SECONDS", 1)
 

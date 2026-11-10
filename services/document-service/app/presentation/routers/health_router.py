@@ -1,4 +1,4 @@
-"""Health check endpoints."""
+"""Health check: Consul y Docker consultan este endpoint."""
 
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse

@@ -1,4 +1,4 @@
-"""Application assembly."""
+"""Ensamblado de la aplicación."""
 
 from contextlib import asynccontextmanager
 
@@ -19,7 +19,7 @@ from app.presentation.upload_limits import keep_multipart_in_memory, reject_unbo
 def create_app_services() -> tuple[
     DocumentService, AsyncMongoClient, HttpTextExtractor, MongoDocumentRepository
 ]:
-    """Build application services and wire their infrastructure dependencies."""
+    """Crea los servicios y les inyecta sus dependencias de infraestructura."""
     settings = get_settings()
     logger.info(f"Conectando a MongoDB (DB: {settings.mongo_db_name})")
     client = AsyncMongoClient(settings.mongo_uri)
@@ -33,7 +33,7 @@ def create_app_services() -> tuple[
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Application lifecycle."""
+    """Arranque y apagado: índices, registro en Consul y cierre de conexiones."""
     logger.info("--- Iniciando Sistema de Gestión de Documentos PDF ---")
     document_service, mongo_client, text_extractor, repository = create_app_services()
     await repository.ensure_indexes()

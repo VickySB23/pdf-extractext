@@ -1,4 +1,4 @@
-"""Application settings."""
+"""Configuración leída de variables de entorno."""
 
 from functools import lru_cache
 

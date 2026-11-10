@@ -1,4 +1,4 @@
-"""Core helpers exported for application modules."""
+"""Configuración compartida por las capas de la aplicación."""
 
 from app.core.config import get_settings
 
