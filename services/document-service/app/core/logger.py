@@ -2,7 +2,7 @@ import logging
 import sys
 
 def setup_logger():
-    logger = logging.getLogger("pdf_extractor")
+    logger = logging.getLogger("document-service")
     logger.setLevel(logging.INFO)
     formatter = logging.Formatter(
         fmt="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
@@ -13,6 +13,8 @@ def setup_logger():
 
     if not logger.handlers:
         logger.addHandler(handler)
-        
+
     return logger
+
+
 logger = setup_logger()

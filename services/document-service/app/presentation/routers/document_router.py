@@ -22,7 +22,7 @@ def get_document_service(request: Request) -> DocumentService:
 
 @router.post("/documents", response_model=DocumentResponse)
 async def create_document_endpoint(
-    file: UploadFile = File(...), 
+    file: UploadFile = File(...),
     service: DocumentService = Depends(get_document_service)
 ):
     """Sube un PDF, extrae su texto y lo guarda. El archivo se procesa en memoria."""
@@ -33,19 +33,19 @@ async def create_document_endpoint(
     try:
         return await service.create_document(await file.read(), filename)
     except (NoTextError, InvalidPDFError, EncryptedPDFError) as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
     except FileTooLargeError as e:
-        raise HTTPException(status_code=413, detail=str(e))
+        raise HTTPException(status_code=413, detail=str(e)) from e
     except ExtractorUnavailableError as e:
         raise HTTPException(
             status_code=503,
             detail=str(e),
             headers={"Retry-After": e.retry_after} if e.retry_after else None,
-        )
+        ) from e
     except ExtractorProtocolError as e:
-        raise HTTPException(status_code=502, detail=str(e))
+        raise HTTPException(status_code=502, detail=str(e)) from e
     except DuplicateDocumentError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
 
 @router.get("/documents", response_model=list[DocumentResponse])
 async def list_documents_endpoint(service: DocumentService = Depends(get_document_service)):
@@ -62,8 +62,8 @@ async def get_document_endpoint(doc_id: UUID, service: DocumentService = Depends
 
 @router.put("/documents/{doc_id}", response_model=DocumentResponse)
 async def update_document_endpoint(
-    doc_id: UUID, 
-    req: DocumentUpdateRequest, 
+    doc_id: UUID,
+    req: DocumentUpdateRequest,
     service: DocumentService = Depends(get_document_service)
 ):
     """Permite la modificación manual del texto extraído de un documento (Update del CRUD)."""

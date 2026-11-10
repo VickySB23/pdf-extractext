@@ -25,11 +25,11 @@ async def test_save_and_retrieve_document(repository):
         checksum="hash_de_prueba_123",
         created_at=datetime.now(timezone.utc)
     )
-    
+
     # 2. Act
     saved_doc = await repository.save(doc)
     fetched_doc = await repository.get_by_id(doc_id)
-    
+
     # 3. Assert
     assert saved_doc.original_filename == "prueba.pdf"
     assert saved_doc.checksum == "hash_de_prueba_123"
@@ -47,11 +47,11 @@ async def test_exists_by_checksum_logic(repository):
         created_at=datetime.now(timezone.utc)
     )
     await repository.save(doc)
-    
+
     # 2. Act
     exists_true = await repository.exists_by_checksum("hash_duplicado")
     exists_false = await repository.exists_by_checksum("no_existe")
-    
+
     # 3. Assert
     assert exists_true is True
     assert exists_false is False
